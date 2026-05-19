@@ -14,6 +14,7 @@ import LoginPage from '@/pages/LoginPage';
 import Layout from '@/components/layout/Layout';
 import EmptyState from '@/components/ui/EmptyState';
 import NewWorldModal from '@/components/worlds/NewWorldModal';
+import WorldSelector from '@/components/worlds/WorldSelector';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import CharacterList from '@/components/characters/CharacterList';
 import CharacterEditPanel from '@/components/characters/CharacterEditPanel';
@@ -34,7 +35,7 @@ import NotesView from '@/components/notes/NotesView';
 import ItemsView from '@/components/items/ItemsView';
 import type { SearchResult } from '@/lib/db';
 import { exportAllData, downloadJson, importAllData } from '@/lib/backup';
-import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
+import { Globe, Plus, Users, Clock, Map, Loader2 } from 'lucide-react';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
   characters: { icon: Users, title: '人物设定库', description: '在这里创建和管理你的OC人设卡' },
@@ -52,7 +53,7 @@ function AuthenticatedApp() {
   const { user, signOut } = useAuth();
   const {
     worlds, activeWorldId, loading: worldsLoading, setActiveWorld,
-    fetchWorlds, createWorld, deleteWorld, startRealtime,
+    fetchWorlds, createWorld, deleteWorld, updateWorld, startRealtime,
   } = useWorlds();
   const {
     characters, fetch: fetchChars,
@@ -93,6 +94,7 @@ function AuthenticatedApp() {
   const [itemEditId, setItemEditId] = useState<string | null>(null);
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
+  const [showWorldSelector, setShowWorldSelector] = useState(false);
 
   useEffect(() => {
     fetchWorlds();
@@ -235,6 +237,7 @@ function AuthenticatedApp() {
         onSelectSearchResult={handleSearchResult}
         onExport={handleExport}
         onImport={handleImport}
+        onShowAllWorlds={() => setShowWorldSelector(true)}
         drawerContent={
           activeModule === 'characters' && activeWorldId ? (
             <CharacterEditPanel worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
@@ -272,22 +275,17 @@ function AuthenticatedApp() {
           )
         }
       >
-        {worlds.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center max-w-sm">
-              <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Sparkles size={36} className="text-primary-500" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">欢迎使用 OC World Builder</h2>
-              <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
-                创建你的第一个世界观，开始记录人物、时间线、地图等设定。
-                所有数据自动云端同步，换设备也不会丢失。
-              </p>
-              <button className="btn-primary text-sm" onClick={() => setNewWorldOpen(true)}>
-                创建第一个世界观
-              </button>
-            </div>
-          </div>
+        {worlds.length === 0 || showWorldSelector || !activeWorldId ? (
+          <WorldSelector
+            worlds={worlds}
+            onSelect={(id) => { setActiveWorld(id); setShowWorldSelector(false); }}
+            onNew={() => setNewWorldOpen(true)}
+            onDelete={handleDeleteWorld}
+            onRename={async (id) => {
+              const name = prompt('重命名世界观：', worlds.find(w => w.id === id)?.name);
+              if (name && name.trim()) await updateWorld(id, { name: name.trim() });
+            }}
+          />
         ) : activeModule === 'characters' && activeWorldId ? (
           <div className="p-6">
             <CharacterList characters={characters} activeId={null} onSelect={openEditDrawer} onCreate={openCreateDrawer} />

@@ -19,6 +19,7 @@ interface SidebarProps {
   onDeleteWorld: (id: string) => void;
   onSelectModule: (module: string) => void;
   onNewWorld?: () => void;
+  onShowAllWorlds?: () => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -37,7 +38,7 @@ const modules = [
 
 export default function Sidebar({
   worlds, activeWorldId, activeModule, onSelectWorld, onDeleteWorld, onSelectModule,
-  onNewWorld, collapsed, onToggleCollapse,
+  onNewWorld, onShowAllWorlds, collapsed, onToggleCollapse,
 }: SidebarProps) {
   const [worldsExpanded, setWorldsExpanded] = useState(true);
 
@@ -83,12 +84,20 @@ export default function Sidebar({
       </div>
 
       <div className="p-2">
+        {onShowAllWorlds && (
+          <button
+            onClick={onShowAllWorlds}
+            className="flex items-center gap-2 w-full text-xs text-primary-500 font-medium px-2 py-1.5 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 mb-1"
+          >
+            <Globe size={14} /> 全部世界观 ({worlds.length})
+          </button>
+        )}
         <button
           onClick={() => setWorldsExpanded(!worldsExpanded)}
           className="flex items-center gap-1 w-full text-xs text-[rgb(var(--color-text-secondary))] px-2 py-1 rounded hover:bg-[rgb(var(--color-border))]"
         >
           <ChevronDown size={12} className={clsx('transition-transform', worldsExpanded || '-rotate-90')} />
-          全部世界观 ({worlds.length})
+          当前世界观
         </button>
         {worldsExpanded && (
           <div className="mt-1 space-y-0.5">

@@ -27,6 +27,7 @@ interface LayoutProps {
   onSelectSearchResult?: (result: SearchResult) => void;
   onExport?: () => void;
   onImport?: () => void;
+  onShowAllWorlds?: () => void;
   children: ReactNode;
   drawerContent?: ReactNode;
 }
@@ -35,7 +36,7 @@ export default function Layout({
   worlds, activeWorldId, onSelectWorld, onDeleteWorld,
   activeModule, onSelectModule,
   drawerOpen, drawerTitle, onCloseDrawer, onNewWorld, onNew,
-  onSelectSearchResult, onExport, onImport, children, drawerContent,
+  onSelectSearchResult, onExport, onImport, onShowAllWorlds, children, drawerContent,
 }: LayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -60,6 +61,7 @@ export default function Layout({
             onDeleteWorld={onDeleteWorld}
             onSelectModule={onSelectModule}
             onNewWorld={onNewWorld}
+            onShowAllWorlds={onShowAllWorlds}
             collapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
@@ -78,6 +80,7 @@ export default function Layout({
                 onDeleteWorld={onDeleteWorld}
                 onSelectModule={handleSelectModule}
                 onNewWorld={onNewWorld}
+                onShowAllWorlds={onShowAllWorlds}
                 collapsed={false}
                 onToggleCollapse={() => setMobileSidebarOpen(false)}
               />
