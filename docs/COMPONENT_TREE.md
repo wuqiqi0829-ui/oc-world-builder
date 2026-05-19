@@ -18,18 +18,32 @@
 | Drawer | src/components/layout/Drawer.tsx | 右侧编辑抽屉面板 |
 | MobileNav | src/components/layout/MobileNav.tsx | 移动端底部 Tab 栏 + 菜单 |
 
-### 通用 UI（阶段 1）
+### 通用 UI（阶段 1 + 5）
 | 组件 | 文件 | 说明 |
 |------|------|------|
 | Card | src/components/ui/Card.tsx | 通用卡片容器 |
 | Modal | src/components/ui/Modal.tsx | 通用弹窗 |
 | ConfirmDialog | src/components/ui/ConfirmDialog.tsx | 确认删除对话框 |
 | EmptyState | src/components/ui/EmptyState.tsx | 空数据占位 |
+| RichTextEditor | src/components/ui/RichTextEditor.tsx | TipTap 富文本编辑器 |
+| ImageUploader | src/components/ui/ImageUploader.tsx | 多图上传+压缩+拖拽排序 |
+| Lightbox | src/components/ui/Lightbox.tsx | 图片全屏预览 |
 
 ### 状态管理
 | Store | 文件 | 说明 |
 |-------|------|------|
 | useTheme | src/stores/theme.ts | 亮/暗主题切换，localStorage 持久化 |
+| useWorlds | src/stores/worlds.ts | 世界观 CRUD + 实时同步 |
+
+### Hooks
+| Hook | 文件 | 说明 |
+|------|------|------|
+| useAutoSave | src/hooks/useAutoSave.ts | debounce 自动保存 + 状态追踪 |
+
+### 世界观（阶段 4）
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| NewWorldModal | src/components/worlds/NewWorldModal.tsx | 新建世界观弹窗 |
 
 ---
 
@@ -43,7 +57,7 @@ App ✅
 │           ├── TopBar ✅
 │           ├── Sidebar ✅
 │           ├── MainArea
-│           │   ├── WorldSelector ← 阶段 4
+│           │   ├── WorldSelector ✅ (阶段 4)
 │           │   ├── CharacterList ← 阶段 6
 │           │   ├── TimelineView ← 阶段 7
 │           │   ├── MapView ← 阶段 9
@@ -57,7 +71,4 @@ App ✅
 ```
 
 ## 待实现
-- `RichTextEditor` — TipTap 封装 ← 阶段 5
-- `ImageUploader` — 图片上传+压缩+预览 ← 阶段 5
-- `SortableList` — dnd-kit 通用拖拽列表 ← 阶段 5
 - `TagPicker` — 标签选择器 ← 阶段 8
