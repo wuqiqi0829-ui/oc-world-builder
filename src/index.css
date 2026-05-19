@@ -52,3 +52,24 @@
            transition-colors;
   }
 }
+
+@layer utilities {
+  .ProseMirror {
+    @apply outline-none min-h-[120px] text-sm leading-relaxed;
+  }
+  .ProseMirror p.is-editor-empty:first-child::before {
+    @apply text-[rgb(var(--color-text-secondary))]/50 float-left h-0 pointer-events-none;
+    content: attr(data-placeholder);
+  }
+  .ProseMirror h2 { @apply text-lg font-semibold mt-4 mb-2; }
+  .ProseMirror h3 { @apply text-base font-semibold mt-3 mb-1.5; }
+  .ProseMirror ul { @apply list-disc pl-5 my-2; }
+  .ProseMirror ol { @apply list-decimal pl-5 my-2; }
+  .ProseMirror li { @apply my-0.5; }
+  .ProseMirror blockquote {
+    @apply border-l-2 border-primary-400 pl-4 my-3 italic text-[rgb(var(--color-text-secondary))];
+  }
+  .ProseMirror hr { @apply my-4 border-[rgb(var(--color-border))]; }
+  .ProseMirror img { @apply max-w-full h-auto rounded-lg my-2; }
+  .ProseMirror p { @apply my-1; }
+}
