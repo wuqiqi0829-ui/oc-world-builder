@@ -33,6 +33,7 @@ import StorylineView from '@/components/storylines/StorylineView';
 import NotesView from '@/components/notes/NotesView';
 import ItemsView from '@/components/items/ItemsView';
 import type { SearchResult } from '@/lib/db';
+import { exportAllData, downloadJson, importAllData } from '@/lib/backup';
 import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
@@ -161,6 +162,31 @@ function AuthenticatedApp() {
     return '新建';
   };
 
+  const handleExport = async () => {
+    try {
+      const json = await exportAllData();
+      downloadJson(json, `oc-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    } catch { alert('导出失败'); }
+  };
+
+  const handleImport = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const { success, errors } = await importAllData(text);
+        if (errors.length > 0) alert(`导入完成：${success} 条成功\n错误：${errors.join('\n')}`);
+        else alert(`成功导入 ${success} 条数据`);
+        window.location.reload();
+      } catch { alert('导入失败，请检查文件格式'); }
+    };
+    input.click();
+  };
+
   const handleSearchResult = (result: SearchResult) => {
     const moduleMap: Record<string, string> = {
       character: 'characters', timeline: 'timeline', location: 'map',
@@ -207,6 +233,8 @@ function AuthenticatedApp() {
           } else { openCreateDrawer(); }
         }}
         onSelectSearchResult={handleSearchResult}
+        onExport={handleExport}
+        onImport={handleImport}
         drawerContent={
           activeModule === 'characters' && activeWorldId ? (
             <CharacterEditPanel worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />

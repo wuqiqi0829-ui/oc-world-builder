@@ -73,3 +73,12 @@
   .ProseMirror img { @apply max-w-full h-auto rounded-lg my-2; }
   .ProseMirror p { @apply my-1; }
 }
+
+/* 打印样式 */
+@media print {
+  header, nav, .btn-ghost, .btn-primary, button, .lg\:block, .lg\:hidden {
+    display: none !important;
+  }
+  body { background: white !important; color: black !important; }
+  .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+}
