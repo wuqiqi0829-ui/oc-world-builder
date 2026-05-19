@@ -1,0 +1,146 @@
+import { useState } from 'react';
+import {
+  Globe, Clock, Map, Users, Briefcase, Building2,
+  Package, GitBranch, BookOpen, Lightbulb, ChevronLeft,
+  ChevronDown, Trash2
+} from 'lucide-react';
+import clsx from 'clsx';
+
+interface World {
+  id: string;
+  name: string;
+}
+
+interface SidebarProps {
+  worlds: World[];
+  activeWorldId: string | null;
+  activeModule: string;
+  onSelectWorld: (id: string) => void;
+  onDeleteWorld: (id: string) => void;
+  onSelectModule: (module: string) => void;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+}
+
+const modules = [
+  { id: 'timeline', label: '时间线', icon: Clock },
+  { id: 'map', label: '地图', icon: Map },
+  { id: 'characters', label: '人物', icon: Users },
+  { id: 'categories', label: '职业/种族', icon: Briefcase },
+  { id: 'organizations', label: '组织势力', icon: Building2 },
+  { id: 'items', label: '物品图鉴', icon: Package },
+  { id: 'relationships', label: '关系图谱', icon: GitBranch },
+  { id: 'storylines', label: '主线剧情', icon: BookOpen },
+  { id: 'notes', label: '灵感速记', icon: Lightbulb },
+];
+
+export default function Sidebar({
+  worlds, activeWorldId, activeModule, onSelectWorld, onDeleteWorld, onSelectModule,
+  collapsed, onToggleCollapse,
+}: SidebarProps) {
+  const [worldsExpanded, setWorldsExpanded] = useState(true);
+
+  if (collapsed) {
+    return (
+      <aside className="w-14 border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex flex-col items-center py-3 gap-2 flex-shrink-0">
+        <button onClick={onToggleCollapse} className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))] mb-2">
+          <ChevronLeft size={18} className="rotate-180 text-[rgb(var(--color-text-secondary))]" />
+        </button>
+        {modules.map((m) => (
+          <button
+            key={m.id}
+            onClick={() => onSelectModule(m.id)}
+            className={clsx(
+              'w-10 h-10 rounded-btn flex items-center justify-center transition-colors',
+              activeModule === m.id
+                ? 'bg-primary-100 dark:bg-primary-900 text-primary-600'
+                : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-border))]'
+            )}
+            title={m.label}
+          >
+            <m.icon size={20} />
+          </button>
+        ))}
+      </aside>
+    );
+  }
+
+  return (
+    <aside className="w-60 border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex flex-col flex-shrink-0 overflow-hidden">
+      <div className="p-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
+        <span className="text-sm font-medium">世界观</span>
+        <button onClick={onToggleCollapse} className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))]">
+          <ChevronLeft size={16} className="text-[rgb(var(--color-text-secondary))]" />
+        </button>
+      </div>
+
+      <div className="p-2">
+        <button
+          onClick={() => setWorldsExpanded(!worldsExpanded)}
+          className="flex items-center gap-1 w-full text-xs text-[rgb(var(--color-text-secondary))] px-2 py-1 rounded hover:bg-[rgb(var(--color-border))]"
+        >
+          <ChevronDown size={12} className={clsx('transition-transform', worldsExpanded || '-rotate-90')} />
+          全部世界观 ({worlds.length})
+        </button>
+        {worldsExpanded && (
+          <div className="mt-1 space-y-0.5">
+            {worlds.length === 0 ? (
+              <p className="text-xs text-[rgb(var(--color-text-secondary))] px-2 py-2">
+                还没有世界观，点击上方 + 新建
+              </p>
+            ) : (
+              worlds.map((w) => (
+                <div
+                  key={w.id}
+                  className={clsx(
+                    'group flex items-center gap-2 px-2 py-1.5 rounded-btn cursor-pointer text-sm transition-colors',
+                    activeWorldId === w.id
+                      ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                      : 'hover:bg-[rgb(var(--color-border))]'
+                  )}
+                  onClick={() => onSelectWorld(w.id)}
+                >
+                  <Globe size={14} className="flex-shrink-0" />
+                  <span className="truncate flex-1">{w.name}</span>
+                  <button
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all"
+                    onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
+                    title="删除"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="p-3 border-b border-[rgb(var(--color-border))] mt-1">
+        <span className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wider">模块导航</span>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto p-2">
+        {modules.map((m) => (
+          <button
+            key={m.id}
+            onClick={() => onSelectModule(m.id)}
+            className={clsx(
+              'flex items-center gap-3 w-full px-3 py-2 rounded-btn text-sm transition-colors mb-0.5',
+              activeModule === m.id
+                ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 font-medium'
+                : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-border))]'
+            )}
+          >
+            <m.icon size={18} />
+            {m.label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="p-3 border-t border-[rgb(var(--color-border))]">
+        <button className="btn-ghost text-xs w-full text-left">设置</button>
+      </div>
+    </aside>
+  );
+}

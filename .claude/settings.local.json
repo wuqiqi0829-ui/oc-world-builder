@@ -9,7 +9,8 @@
       "Bash(git commit -m ' *)",
       "Bash(git -c 'user.name=OC Builder' -c user.email=dev@oc-world.local commit -m ' *)",
       "Bash(npx tsc *)",
-      "Bash(git -c user.name=\"OC Builder\" -c user.email=\"dev@oc-world.local\" commit -m \"修复：移除未使用的路由导入，通过 TypeScript 严格检查\")"
+      "Bash(git -c user.name=\"OC Builder\" -c user.email=\"dev@oc-world.local\" commit -m \"修复：移除未使用的路由导入，通过 TypeScript 严格检查\")",
+      "Bash(npx vite *)"
     ]
   }
 }
