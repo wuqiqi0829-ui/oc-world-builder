@@ -1,14 +1,15 @@
-import { Search, Moon, Sun, Download, Upload, Plus } from 'lucide-react';
+import { Search, Moon, Sun, Download, Upload, Plus, Globe } from 'lucide-react';
 import { useTheme } from '@/stores/theme';
 
 interface TopBarProps {
   onSearch?: (query: string) => void;
   onNew?: () => void;
+  onNewWorld?: () => void;
   onExport?: () => void;
   onImport?: () => void;
 }
 
-export default function TopBar({ onSearch, onNew, onExport, onImport }: TopBarProps) {
+export default function TopBar({ onSearch, onNew, onNewWorld, onExport, onImport }: TopBarProps) {
   const { theme, toggle } = useTheme();
 
   return (
@@ -28,6 +29,9 @@ export default function TopBar({ onSearch, onNew, onExport, onImport }: TopBarPr
       </div>
 
       <div className="flex items-center gap-1">
+        <button className="btn-ghost h-9 w-9 p-0 flex items-center justify-center" title="新建世界观" onClick={onNewWorld}>
+          <Globe size={18} />
+        </button>
         <button className="btn-ghost h-9 w-9 p-0 flex items-center justify-center" title="新建" onClick={onNew}>
           <Plus size={18} />
         </button>

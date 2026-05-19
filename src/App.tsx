@@ -1,21 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { useWorlds } from '@/stores/worlds';
 import LoginPage from '@/pages/LoginPage';
 import Layout from '@/components/layout/Layout';
 import EmptyState from '@/components/ui/EmptyState';
+import NewWorldModal from '@/components/worlds/NewWorldModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { Globe, Plus, Users, Clock, Map, Loader2 } from 'lucide-react';
-
-interface World {
-  id: string;
-  name: string;
-}
-
-const demoWorlds: World[] = [
-  { id: '1', name: '艾泽拉斯·改' },
-  { id: '2', name: '星落之海' },
-];
+import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
   characters: { icon: Users, title: '人物设定库', description: '在这里创建和管理你的OC人设卡' },
@@ -31,78 +23,126 @@ const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; de
 
 function AuthenticatedApp() {
   const { user, signOut } = useAuth();
-  const [worlds] = useState<World[]>(demoWorlds);
-  const [activeWorldId, setActiveWorldId] = useState<string | null>('1');
+  const {
+    worlds, activeWorldId, loading: worldsLoading, setActiveWorld,
+    fetchWorlds, createWorld, deleteWorld, startRealtime,
+  } = useWorlds();
   const [activeModule, setActiveModule] = useState('characters');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
 
-  const confirmDeleteWorld = () => {
+  useEffect(() => {
+    fetchWorlds();
+    const channel = startRealtime();
+    return () => { channel.unsubscribe(); };
+  }, [fetchWorlds, startRealtime]);
+
+  const handleCreateWorld = async (data: { name: string; description: string; cover_url: string }) => {
+    await createWorld(data);
+  };
+
+  const handleDeleteWorld = (id: string) => {
+    setDeleteWorldId(id);
+  };
+
+  const confirmDeleteWorld = async () => {
     if (deleteWorldId) {
-      if (activeWorldId === deleteWorldId) {
-        setActiveWorldId(worlds.find((w) => w.id !== deleteWorldId)?.id || null);
-      }
+      await deleteWorld(deleteWorldId);
       setDeleteWorldId(null);
     }
   };
 
   const placeholder = modulePlaceholders[activeModule];
 
-  return (
-    <Layout
-      worlds={worlds}
-      activeWorldId={activeWorldId}
-      onSelectWorld={setActiveWorldId}
-      onDeleteWorld={(id) => setDeleteWorldId(id)}
-      activeModule={activeModule}
-      onSelectModule={setActiveModule}
-      drawerOpen={drawerOpen}
-      drawerTitle="新建"
-      onCloseDrawer={() => setDrawerOpen(false)}
-      drawerContent={
-        <div className="space-y-4">
-          <p className="text-sm text-[rgb(var(--color-text-secondary))]">编辑面板将在后续阶段实现</p>
-          <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            当前登录：{user?.email}
-          </p>
-          <button className="btn-ghost text-sm" onClick={signOut}>退出登录</button>
-        </div>
-      }
-    >
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-semibold">{placeholder?.title}</h2>
-            <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">{placeholder?.description}</p>
-          </div>
-          <button className="btn-primary flex items-center gap-2" onClick={() => setDrawerOpen(true)}>
-            <Plus size={16} />
-            新建
-          </button>
-        </div>
-
-        <EmptyState
-          icon={placeholder && <placeholder.icon size={48} />}
-          title={`${placeholder?.title}模块`}
-          description="此模块将在后续开发阶段实现。当前阶段 2 已完成用户认证系统。"
-          action={
-            <button className="btn-primary text-sm" onClick={() => setDrawerOpen(true)}>
-              预览编辑面板
-            </button>
-          }
-        />
+  if (worldsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--color-bg))]">
+        <Loader2 size={32} className="animate-spin text-primary-500" />
       </div>
+    );
+  }
+
+  return (
+    <>
+      <Layout
+        worlds={worlds}
+        activeWorldId={activeWorldId}
+        onSelectWorld={setActiveWorld}
+        onDeleteWorld={handleDeleteWorld}
+        activeModule={activeModule}
+        onSelectModule={setActiveModule}
+        drawerOpen={drawerOpen}
+        drawerTitle="新建"
+        onCloseDrawer={() => setDrawerOpen(false)}
+        onNewWorld={() => setNewWorldOpen(true)}
+        drawerContent={
+          <div className="space-y-4">
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">编辑面板将在后续阶段实现</p>
+            <p className="text-xs text-[rgb(var(--color-text-secondary))]">当前登录：{user?.email}</p>
+            <button className="btn-ghost text-sm" onClick={signOut}>退出登录</button>
+          </div>
+        }
+      >
+        {worlds.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center max-w-sm">
+              <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Sparkles size={36} className="text-primary-500" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">欢迎使用 OC World Builder</h2>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
+                创建你的第一个世界观，开始记录人物、时间线、地图等设定。
+                所有数据自动云端同步，换设备也不会丢失。
+              </p>
+              <button className="btn-primary text-sm" onClick={() => setNewWorldOpen(true)}>
+                创建第一个世界观
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold">{placeholder?.title}</h2>
+                <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">{placeholder?.description}</p>
+              </div>
+              <button className="btn-primary flex items-center gap-2" onClick={() => setDrawerOpen(true)}>
+                <Plus size={16} />
+                新建
+              </button>
+            </div>
+
+            <EmptyState
+              icon={placeholder && <placeholder.icon size={48} />}
+              title={`${placeholder?.title}模块`}
+              description="此模块将在后续开发阶段实现。"
+              action={
+                <button className="btn-primary text-sm" onClick={() => setDrawerOpen(true)}>
+                  预览编辑面板
+                </button>
+              }
+            />
+          </div>
+        )}
+      </Layout>
+
+      <NewWorldModal
+        open={newWorldOpen}
+        onClose={() => setNewWorldOpen(false)}
+        onSave={handleCreateWorld}
+      />
 
       <ConfirmDialog
         open={!!deleteWorldId}
         onClose={() => setDeleteWorldId(null)}
         onConfirm={confirmDeleteWorld}
         title="删除世界观"
-        message="确定要删除吗？此操作不可恢复。"
+        message={`确定要删除"${worlds.find((w) => w.id === deleteWorldId)?.name}"吗？此操作不可恢复。`}
         confirmLabel="删除"
         dangerous
       />
-    </Layout>
+    </>
   );
 }
 

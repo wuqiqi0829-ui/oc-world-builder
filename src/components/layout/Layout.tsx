@@ -7,6 +7,8 @@ import MobileNav from './MobileNav';
 interface World {
   id: string;
   name: string;
+  cover_url?: string | null;
+  description?: string;
 }
 
 interface LayoutProps {
@@ -19,6 +21,7 @@ interface LayoutProps {
   drawerOpen: boolean;
   drawerTitle?: string;
   onCloseDrawer: () => void;
+  onNewWorld?: () => void;
   children: ReactNode;
   drawerContent?: ReactNode;
 }
@@ -26,7 +29,7 @@ interface LayoutProps {
 export default function Layout({
   worlds, activeWorldId, onSelectWorld, onDeleteWorld,
   activeModule, onSelectModule,
-  drawerOpen, drawerTitle, onCloseDrawer,
+  drawerOpen, drawerTitle, onCloseDrawer, onNewWorld,
   children, drawerContent,
 }: LayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -39,7 +42,7 @@ export default function Layout({
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <TopBar />
+      <TopBar onNewWorld={onNewWorld} />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop sidebar */}
@@ -51,6 +54,7 @@ export default function Layout({
             onSelectWorld={onSelectWorld}
             onDeleteWorld={onDeleteWorld}
             onSelectModule={onSelectModule}
+            onNewWorld={onNewWorld}
             collapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
@@ -68,6 +72,7 @@ export default function Layout({
                 onSelectWorld={onSelectWorld}
                 onDeleteWorld={onDeleteWorld}
                 onSelectModule={handleSelectModule}
+                onNewWorld={onNewWorld}
                 collapsed={false}
                 onToggleCollapse={() => setMobileSidebarOpen(false)}
               />

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Globe, Clock, Map, Users, Briefcase, Building2,
   Package, GitBranch, BookOpen, Lightbulb, ChevronLeft,
-  ChevronDown, Trash2
+  ChevronDown, Trash2, Plus
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -18,6 +18,7 @@ interface SidebarProps {
   onSelectWorld: (id: string) => void;
   onDeleteWorld: (id: string) => void;
   onSelectModule: (module: string) => void;
+  onNewWorld?: () => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -36,7 +37,7 @@ const modules = [
 
 export default function Sidebar({
   worlds, activeWorldId, activeModule, onSelectWorld, onDeleteWorld, onSelectModule,
-  collapsed, onToggleCollapse,
+  onNewWorld, collapsed, onToggleCollapse,
 }: SidebarProps) {
   const [worldsExpanded, setWorldsExpanded] = useState(true);
 
@@ -69,9 +70,16 @@ export default function Sidebar({
     <aside className="w-60 border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex flex-col flex-shrink-0 overflow-hidden">
       <div className="p-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
         <span className="text-sm font-medium">世界观</span>
-        <button onClick={onToggleCollapse} className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))]">
-          <ChevronLeft size={16} className="text-[rgb(var(--color-text-secondary))]" />
-        </button>
+        <div className="flex items-center gap-1">
+          {onNewWorld && (
+            <button onClick={onNewWorld} className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))] text-primary-500" title="新建世界观">
+              <Plus size={16} />
+            </button>
+          )}
+          <button onClick={onToggleCollapse} className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))]">
+            <ChevronLeft size={16} className="text-[rgb(var(--color-text-secondary))]" />
+          </button>
+        </div>
       </div>
 
       <div className="p-2">
