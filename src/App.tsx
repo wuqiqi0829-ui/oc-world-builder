@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useWorlds } from '@/stores/worlds';
 import { useCharacters } from '@/stores/characters';
+import { useTimeline } from '@/stores/timeline';
 import LoginPage from '@/pages/LoginPage';
 import Layout from '@/components/layout/Layout';
 import EmptyState from '@/components/ui/EmptyState';
@@ -10,6 +11,8 @@ import NewWorldModal from '@/components/worlds/NewWorldModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import CharacterList from '@/components/characters/CharacterList';
 import CharacterEditPanel from '@/components/characters/CharacterEditPanel';
+import TimelineView from '@/components/timeline/TimelineView';
+import TimelineEditPanel from '@/components/timeline/TimelineEditPanel';
 import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
@@ -34,10 +37,14 @@ function AuthenticatedApp() {
     characters, fetch: fetchChars,
     startRealtime: charRealtime,
   } = useCharacters();
+  const {
+    events, fetch: fetchTimeline,
+    startRealtime: timelineRealtime,
+  } = useTimeline();
   const [activeModule, setActiveModule] = useState('characters');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'create' | 'edit'>('create');
-  const [editCharId, setEditCharId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
 
@@ -50,10 +57,12 @@ function AuthenticatedApp() {
   useEffect(() => {
     if (activeWorldId) {
       fetchChars(activeWorldId);
-      const channel = charRealtime(activeWorldId);
-      return () => { channel.unsubscribe(); };
+      fetchTimeline(activeWorldId);
+      const chChannel = charRealtime(activeWorldId);
+      const tlChannel = timelineRealtime(activeWorldId);
+      return () => { chChannel.unsubscribe(); tlChannel.unsubscribe(); };
     }
-  }, [activeWorldId, fetchChars, charRealtime]);
+  }, [activeWorldId, fetchChars, fetchTimeline, charRealtime, timelineRealtime]);
 
   const handleCreateWorld = async (data: { name: string; description: string; cover_url: string }) => {
     await createWorld(data);
@@ -72,19 +81,25 @@ function AuthenticatedApp() {
 
   const openCreateDrawer = () => {
     setDrawerMode('create');
-    setEditCharId(null);
+    setEditId(null);
     setDrawerOpen(true);
   };
 
-  const openEditDrawer = (charId: string) => {
+  const openEditDrawer = (id: string) => {
     setDrawerMode('edit');
-    setEditCharId(charId);
+    setEditId(id);
     setDrawerOpen(true);
   };
 
   const closeDrawer = () => {
     setDrawerOpen(false);
-    setEditCharId(null);
+    setEditId(null);
+  };
+
+  const drawerTitle = () => {
+    if (activeModule === 'characters') return drawerMode === 'create' ? '新建角色' : '编辑角色';
+    if (activeModule === 'timeline') return drawerMode === 'create' ? '新建事件' : '编辑事件';
+    return '新建';
   };
 
   const placeholder = modulePlaceholders[activeModule];
@@ -107,17 +122,15 @@ function AuthenticatedApp() {
         activeModule={activeModule}
         onSelectModule={setActiveModule}
         drawerOpen={drawerOpen}
-        drawerTitle={drawerMode === 'create' ? '新建角色' : '编辑角色'}
+        drawerTitle={drawerTitle()}
         onCloseDrawer={closeDrawer}
         onNewWorld={() => setNewWorldOpen(true)}
-        onNew={activeModule === 'characters' ? openCreateDrawer : () => setDrawerOpen(true)}
+        onNew={activeModule !== 'categories' ? openCreateDrawer : () => setDrawerOpen(true)}
         drawerContent={
           activeModule === 'characters' && activeWorldId ? (
-            <CharacterEditPanel
-              worldId={activeWorldId}
-              characterId={drawerMode === 'edit' ? editCharId : null}
-              onClose={closeDrawer}
-            />
+            <CharacterEditPanel worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
+          ) : activeModule === 'timeline' && activeWorldId ? (
+            <TimelineEditPanel worldId={activeWorldId} eventId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">编辑面板将在后续阶段实现</p>
@@ -145,12 +158,11 @@ function AuthenticatedApp() {
           </div>
         ) : activeModule === 'characters' && activeWorldId ? (
           <div className="p-6">
-            <CharacterList
-              characters={characters}
-              activeId={null}
-              onSelect={openEditDrawer}
-              onCreate={openCreateDrawer}
-            />
+            <CharacterList characters={characters} activeId={null} onSelect={openEditDrawer} onCreate={openCreateDrawer} />
+          </div>
+        ) : activeModule === 'timeline' && activeWorldId ? (
+          <div className="p-6">
+            <TimelineView events={events} onCreate={openCreateDrawer} onEdit={openEditDrawer} />
           </div>
         ) : (
           <div className="p-6">
