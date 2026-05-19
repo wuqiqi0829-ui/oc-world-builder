@@ -7,6 +7,7 @@ import { useTimeline } from '@/stores/timeline';
 import { useLocations } from '@/stores/locations';
 import { useCategories } from '@/stores/categories';
 import { useOrganizations } from '@/stores/organizations';
+import { useRelationships } from '@/stores/relationships';
 import LoginPage from '@/pages/LoginPage';
 import Layout from '@/components/layout/Layout';
 import EmptyState from '@/components/ui/EmptyState';
@@ -23,6 +24,8 @@ import CategoryEditPanel from '@/components/categories/CategoryEditPanel';
 import EntryEditPanel from '@/components/categories/EntryEditPanel';
 import OrganizationView from '@/components/organizations/OrganizationView';
 import OrganizationEditPanel from '@/components/organizations/OrganizationEditPanel';
+import RelationshipGraph from '@/components/relationships/RelationshipGraph';
+import RelationshipEditPanel from '@/components/relationships/RelationshipEditPanel';
 import type { SearchResult } from '@/lib/db';
 import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
 
@@ -61,12 +64,18 @@ function AuthenticatedApp() {
   } = useCategories();
   const {
     fetch: fetchOrgs, startRealtime: orgsRealtime,
+    organizations,
   } = useOrganizations();
+  const {
+    fetch: fetchRels, remove: removeRel,
+  } = useRelationships();
   const [activeModule, setActiveModule] = useState('characters');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'create' | 'edit' | 'category'>('create');
   const [editId, setEditId] = useState<string | null>(null);
   const [categoryEditId, setCategoryEditId] = useState<string | null>(null);
+  const [relSourceType, setRelSourceType] = useState('');
+  const [relSourceId, setRelSourceId] = useState('');
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
 
@@ -83,6 +92,7 @@ function AuthenticatedApp() {
       fetchLocations(activeWorldId);
       fetchCategories(activeWorldId);
       fetchOrgs(activeWorldId);
+      fetchRels(activeWorldId);
       const chChannel = charRealtime(activeWorldId);
       const tlChannel = timelineRealtime(activeWorldId);
       const locChannel = locationsRealtime(activeWorldId);
@@ -131,6 +141,7 @@ function AuthenticatedApp() {
     if (activeModule === 'categories' && drawerMode === 'category') return '编辑分类';
     if (activeModule === 'categories') return drawerMode === 'create' ? '新建条目' : '编辑条目';
     if (activeModule === 'organizations') return drawerMode === 'create' ? '新建组织' : '编辑组织';
+    if (activeModule === 'relationships') return '添加关系';
     return '新建';
   };
 
@@ -198,6 +209,16 @@ function AuthenticatedApp() {
             )
           ) : activeModule === 'organizations' && activeWorldId ? (
             <OrganizationEditPanel worldId={activeWorldId} orgId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
+          ) : activeModule === 'relationships' && activeWorldId ? (
+            <RelationshipEditPanel
+              worldId={activeWorldId}
+              characters={characters}
+              organizations={organizations}
+              locations={locations}
+              prefillSourceType={relSourceType}
+              prefillSourceId={relSourceId}
+              onClose={closeDrawer}
+            />
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">编辑面板将在后续阶段实现</p>
@@ -252,6 +273,20 @@ function AuthenticatedApp() {
         ) : activeModule === 'organizations' && activeWorldId ? (
           <div className="p-6">
             <OrganizationView worldId={activeWorldId} onCreate={openCreateDrawer} onEdit={openEditDrawer} />
+          </div>
+        ) : activeModule === 'relationships' && activeWorldId ? (
+          <div className="p-4 h-full">
+            <RelationshipGraph
+              worldId={activeWorldId}
+              characters={characters}
+              organizations={organizations}
+              locations={locations}
+              onCreate={(sourceType, sourceId) => {
+                setRelSourceType(sourceType); setRelSourceId(sourceId);
+                setDrawerMode('create'); setEditId(null); setDrawerOpen(true);
+              }}
+              onDeleteRelation={async (id) => { await removeRel(id); }}
+            />
           </div>
         ) : (
           <div className="p-6">
