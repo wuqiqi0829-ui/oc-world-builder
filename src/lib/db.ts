@@ -209,3 +209,67 @@ export async function deleteImage(url: string) {
     await supabase.storage.from('images').remove([path]);
   }
 }
+
+// ============================================
+// 全局搜索
+// ============================================
+export interface SearchResult {
+  id: string;
+  type: 'character' | 'timeline' | 'location' | 'organization' | 'item' | 'storyline' | 'note';
+  title: string;
+  subtitle: string;
+  world_id: string;
+  world_name: string;
+}
+
+export async function globalSearch(query: string): Promise<SearchResult[]> {
+  if (!query.trim() || query.trim().length < 1) return [];
+  const pattern = `%${query.trim()}%`;
+  const results: SearchResult[] = [];
+
+  const tables = [
+    { table: 'characters', type: 'character' as const, nameField: 'name', subField: 'nickname' },
+    { table: 'timeline_events', type: 'timeline' as const, nameField: 'title', subField: 'time_label' },
+    { table: 'locations', type: 'location' as const, nameField: 'name', subField: 'region' },
+    { table: 'organizations', type: 'organization' as const, nameField: 'name', subField: 'type' },
+    { table: 'items', type: 'item' as const, nameField: 'name', subField: 'category' },
+    { table: 'storylines', type: 'storyline' as const, nameField: 'title', subField: null },
+    { table: 'notes', type: 'note' as const, nameField: null, subField: null },
+  ];
+
+  // Get world names first
+  const { data: worlds } = await supabase.from('worlds').select('id, name');
+
+  for (const { table, type, nameField, subField } of tables) {
+    let q = supabase.from(table).select('id, world_id');
+    if (nameField) q = q.select(`id, world_id, ${nameField}`);
+    if (subField) q = q.select(`id, world_id, ${nameField}, ${subField}`);
+
+    if (table === 'notes') {
+      q = q.ilike('content', pattern);
+    } else {
+      const orParts = nameField ? [`${nameField}.ilike.${pattern}`] : [];
+      if (subField) orParts.push(`${subField}.ilike.${pattern}`);
+      q = q.or(orParts.join(','));
+    }
+
+    q = q.limit(10);
+
+    const { data, error } = await q;
+    if (error || !data) continue;
+
+    for (const row of data as Record<string, string>[]) {
+      const world = worlds?.find((w) => w.id === row.world_id);
+      results.push({
+        id: row.id,
+        type,
+        title: type === 'note' ? (row.content || '').slice(0, 60) : (row[nameField || 'id'] || ''),
+        subtitle: subField ? (row[subField] || '') : '',
+        world_id: row.world_id,
+        world_name: world?.name || '未知世界观',
+      });
+    }
+  }
+
+  return results;
+}

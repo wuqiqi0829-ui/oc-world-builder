@@ -13,6 +13,7 @@ import CharacterList from '@/components/characters/CharacterList';
 import CharacterEditPanel from '@/components/characters/CharacterEditPanel';
 import TimelineView from '@/components/timeline/TimelineView';
 import TimelineEditPanel from '@/components/timeline/TimelineEditPanel';
+import type { SearchResult } from '@/lib/db';
 import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
@@ -102,6 +103,23 @@ function AuthenticatedApp() {
     return '新建';
   };
 
+  const handleSearchResult = (result: SearchResult) => {
+    const moduleMap: Record<string, string> = {
+      character: 'characters', timeline: 'timeline', location: 'map',
+      organization: 'organizations', item: 'items', storyline: 'storylines',
+      note: 'notes',
+    };
+    const mod = moduleMap[result.type] || result.type;
+    if (result.world_id) setActiveWorld(result.world_id);
+    setActiveModule(mod);
+    // Open the edit drawer for the matching item
+    setTimeout(() => {
+      setEditId(result.id);
+      setDrawerMode('edit');
+      setDrawerOpen(true);
+    }, 100);
+  };
+
   const placeholder = modulePlaceholders[activeModule];
 
   if (worldsLoading) {
@@ -126,6 +144,7 @@ function AuthenticatedApp() {
         onCloseDrawer={closeDrawer}
         onNewWorld={() => setNewWorldOpen(true)}
         onNew={activeModule !== 'categories' ? openCreateDrawer : () => setDrawerOpen(true)}
+        onSelectSearchResult={handleSearchResult}
         drawerContent={
           activeModule === 'characters' && activeWorldId ? (
             <CharacterEditPanel worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />

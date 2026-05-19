@@ -3,6 +3,7 @@ import TopBar from './TopBar';
 import Sidebar from './Sidebar';
 import Drawer from './Drawer';
 import MobileNav from './MobileNav';
+import type { SearchResult } from '@/lib/db';
 
 interface World {
   id: string;
@@ -23,6 +24,7 @@ interface LayoutProps {
   onCloseDrawer: () => void;
   onNewWorld?: () => void;
   onNew?: () => void;
+  onSelectSearchResult?: (result: SearchResult) => void;
   children: ReactNode;
   drawerContent?: ReactNode;
 }
@@ -31,7 +33,7 @@ export default function Layout({
   worlds, activeWorldId, onSelectWorld, onDeleteWorld,
   activeModule, onSelectModule,
   drawerOpen, drawerTitle, onCloseDrawer, onNewWorld, onNew,
-  children, drawerContent,
+  onSelectSearchResult, children, drawerContent,
 }: LayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -43,7 +45,7 @@ export default function Layout({
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <TopBar onNew={onNew} onNewWorld={onNewWorld} />
+      <TopBar onNew={onNew} onNewWorld={onNewWorld} onSelectSearchResult={onSelectSearchResult} />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop sidebar */}
