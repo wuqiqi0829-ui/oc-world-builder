@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useWorlds } from '@/stores/worlds';
+import { useCharacters } from '@/stores/characters';
 import LoginPage from '@/pages/LoginPage';
 import Layout from '@/components/layout/Layout';
 import EmptyState from '@/components/ui/EmptyState';
 import NewWorldModal from '@/components/worlds/NewWorldModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import CharacterList from '@/components/characters/CharacterList';
+import CharacterEditPanel from '@/components/characters/CharacterEditPanel';
 import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
@@ -27,8 +30,14 @@ function AuthenticatedApp() {
     worlds, activeWorldId, loading: worldsLoading, setActiveWorld,
     fetchWorlds, createWorld, deleteWorld, startRealtime,
   } = useWorlds();
+  const {
+    characters, fetch: fetchChars,
+    startRealtime: charRealtime,
+  } = useCharacters();
   const [activeModule, setActiveModule] = useState('characters');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<'create' | 'edit'>('create');
+  const [editCharId, setEditCharId] = useState<string | null>(null);
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
 
@@ -37,6 +46,14 @@ function AuthenticatedApp() {
     const channel = startRealtime();
     return () => { channel.unsubscribe(); };
   }, [fetchWorlds, startRealtime]);
+
+  useEffect(() => {
+    if (activeWorldId) {
+      fetchChars(activeWorldId);
+      const channel = charRealtime(activeWorldId);
+      return () => { channel.unsubscribe(); };
+    }
+  }, [activeWorldId, fetchChars, charRealtime]);
 
   const handleCreateWorld = async (data: { name: string; description: string; cover_url: string }) => {
     await createWorld(data);
@@ -51,6 +68,23 @@ function AuthenticatedApp() {
       await deleteWorld(deleteWorldId);
       setDeleteWorldId(null);
     }
+  };
+
+  const openCreateDrawer = () => {
+    setDrawerMode('create');
+    setEditCharId(null);
+    setDrawerOpen(true);
+  };
+
+  const openEditDrawer = (charId: string) => {
+    setDrawerMode('edit');
+    setEditCharId(charId);
+    setDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setEditCharId(null);
   };
 
   const placeholder = modulePlaceholders[activeModule];
@@ -73,15 +107,24 @@ function AuthenticatedApp() {
         activeModule={activeModule}
         onSelectModule={setActiveModule}
         drawerOpen={drawerOpen}
-        drawerTitle="新建"
-        onCloseDrawer={() => setDrawerOpen(false)}
+        drawerTitle={drawerMode === 'create' ? '新建角色' : '编辑角色'}
+        onCloseDrawer={closeDrawer}
         onNewWorld={() => setNewWorldOpen(true)}
+        onNew={activeModule === 'characters' ? openCreateDrawer : () => setDrawerOpen(true)}
         drawerContent={
-          <div className="space-y-4">
-            <p className="text-sm text-[rgb(var(--color-text-secondary))]">编辑面板将在后续阶段实现</p>
-            <p className="text-xs text-[rgb(var(--color-text-secondary))]">当前登录：{user?.email}</p>
-            <button className="btn-ghost text-sm" onClick={signOut}>退出登录</button>
-          </div>
+          activeModule === 'characters' && activeWorldId ? (
+            <CharacterEditPanel
+              worldId={activeWorldId}
+              characterId={drawerMode === 'edit' ? editCharId : null}
+              onClose={closeDrawer}
+            />
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">编辑面板将在后续阶段实现</p>
+              <p className="text-xs text-[rgb(var(--color-text-secondary))]">当前登录：{user?.email}</p>
+              <button className="btn-ghost text-sm" onClick={signOut}>退出登录</button>
+            </div>
+          )
         }
       >
         {worlds.length === 0 ? (
@@ -99,6 +142,15 @@ function AuthenticatedApp() {
                 创建第一个世界观
               </button>
             </div>
+          </div>
+        ) : activeModule === 'characters' && activeWorldId ? (
+          <div className="p-6">
+            <CharacterList
+              characters={characters}
+              activeId={null}
+              onSelect={openEditDrawer}
+              onCreate={openCreateDrawer}
+            />
           </div>
         ) : (
           <div className="p-6">

@@ -22,6 +22,7 @@ interface LayoutProps {
   drawerTitle?: string;
   onCloseDrawer: () => void;
   onNewWorld?: () => void;
+  onNew?: () => void;
   children: ReactNode;
   drawerContent?: ReactNode;
 }
@@ -29,7 +30,7 @@ interface LayoutProps {
 export default function Layout({
   worlds, activeWorldId, onSelectWorld, onDeleteWorld,
   activeModule, onSelectModule,
-  drawerOpen, drawerTitle, onCloseDrawer, onNewWorld,
+  drawerOpen, drawerTitle, onCloseDrawer, onNewWorld, onNew,
   children, drawerContent,
 }: LayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -42,7 +43,7 @@ export default function Layout({
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <TopBar onNewWorld={onNewWorld} />
+      <TopBar onNew={onNew} onNewWorld={onNewWorld} />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop sidebar */}
