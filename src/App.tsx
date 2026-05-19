@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useWorlds } from '@/stores/worlds';
 import { useCharacters } from '@/stores/characters';
 import { useTimeline } from '@/stores/timeline';
+import { useLocations } from '@/stores/locations';
 import LoginPage from '@/pages/LoginPage';
 import Layout from '@/components/layout/Layout';
 import EmptyState from '@/components/ui/EmptyState';
@@ -13,6 +14,8 @@ import CharacterList from '@/components/characters/CharacterList';
 import CharacterEditPanel from '@/components/characters/CharacterEditPanel';
 import TimelineView from '@/components/timeline/TimelineView';
 import TimelineEditPanel from '@/components/timeline/TimelineEditPanel';
+import MapView from '@/components/map/MapView';
+import LocationEditPanel from '@/components/map/LocationEditPanel';
 import type { SearchResult } from '@/lib/db';
 import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
 
@@ -42,6 +45,10 @@ function AuthenticatedApp() {
     events, fetch: fetchTimeline,
     startRealtime: timelineRealtime,
   } = useTimeline();
+  const {
+    locations, fetch: fetchLocations,
+    startRealtime: locationsRealtime,
+  } = useLocations();
   const [activeModule, setActiveModule] = useState('characters');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'create' | 'edit'>('create');
@@ -59,9 +66,11 @@ function AuthenticatedApp() {
     if (activeWorldId) {
       fetchChars(activeWorldId);
       fetchTimeline(activeWorldId);
+      fetchLocations(activeWorldId);
       const chChannel = charRealtime(activeWorldId);
       const tlChannel = timelineRealtime(activeWorldId);
-      return () => { chChannel.unsubscribe(); tlChannel.unsubscribe(); };
+      const locChannel = locationsRealtime(activeWorldId);
+      return () => { chChannel.unsubscribe(); tlChannel.unsubscribe(); locChannel.unsubscribe(); };
     }
   }, [activeWorldId, fetchChars, fetchTimeline, charRealtime, timelineRealtime]);
 
@@ -100,6 +109,7 @@ function AuthenticatedApp() {
   const drawerTitle = () => {
     if (activeModule === 'characters') return drawerMode === 'create' ? '新建角色' : '编辑角色';
     if (activeModule === 'timeline') return drawerMode === 'create' ? '新建事件' : '编辑事件';
+    if (activeModule === 'map') return drawerMode === 'create' ? '新建地点' : '编辑地点';
     return '新建';
   };
 
@@ -150,6 +160,8 @@ function AuthenticatedApp() {
             <CharacterEditPanel worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : activeModule === 'timeline' && activeWorldId ? (
             <TimelineEditPanel worldId={activeWorldId} eventId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
+          ) : activeModule === 'map' && activeWorldId ? (
+            <LocationEditPanel worldId={activeWorldId} locationId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">编辑面板将在后续阶段实现</p>
@@ -182,6 +194,14 @@ function AuthenticatedApp() {
         ) : activeModule === 'timeline' && activeWorldId ? (
           <div className="p-6">
             <TimelineView events={events} onCreate={openCreateDrawer} onEdit={openEditDrawer} />
+          </div>
+        ) : activeModule === 'map' && activeWorldId ? (
+          <div className="p-4 h-full">
+            <MapView locations={locations} onCreate={(_x, _y) => {
+              setEditId(null);
+              setDrawerMode('create');
+              setDrawerOpen(true);
+            }} onEdit={openEditDrawer} worldId={activeWorldId} />
           </div>
         ) : (
           <div className="p-6">
