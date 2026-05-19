@@ -8,6 +8,8 @@ import { useLocations } from '@/stores/locations';
 import { useCategories } from '@/stores/categories';
 import { useOrganizations } from '@/stores/organizations';
 import { useRelationships } from '@/stores/relationships';
+import { useStorylines } from '@/stores/storylines';
+import { useItems } from '@/stores/items';
 import LoginPage from '@/pages/LoginPage';
 import Layout from '@/components/layout/Layout';
 import EmptyState from '@/components/ui/EmptyState';
@@ -26,6 +28,10 @@ import OrganizationView from '@/components/organizations/OrganizationView';
 import OrganizationEditPanel from '@/components/organizations/OrganizationEditPanel';
 import RelationshipGraph from '@/components/relationships/RelationshipGraph';
 import RelationshipEditPanel from '@/components/relationships/RelationshipEditPanel';
+import StorylineList from '@/components/storylines/StorylineList';
+import StorylineView from '@/components/storylines/StorylineView';
+import NotesView from '@/components/notes/NotesView';
+import ItemsView from '@/components/items/ItemsView';
 import type { SearchResult } from '@/lib/db';
 import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
 
@@ -69,6 +75,12 @@ function AuthenticatedApp() {
   const {
     fetch: fetchRels, remove: removeRel,
   } = useRelationships();
+  const {
+    storylines, fetch: fetchStorylines, update: updateStoryline,
+  } = useStorylines();
+  const {
+    fetch: fetchItems,
+  } = useItems();
   const [activeModule, setActiveModule] = useState('characters');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'create' | 'edit' | 'category'>('create');
@@ -76,6 +88,8 @@ function AuthenticatedApp() {
   const [categoryEditId, setCategoryEditId] = useState<string | null>(null);
   const [relSourceType, setRelSourceType] = useState('');
   const [relSourceId, setRelSourceId] = useState('');
+  const [storylineId, setStorylineId] = useState<string | null>(null);
+  const [itemEditId, setItemEditId] = useState<string | null>(null);
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
 
@@ -93,6 +107,8 @@ function AuthenticatedApp() {
       fetchCategories(activeWorldId);
       fetchOrgs(activeWorldId);
       fetchRels(activeWorldId);
+      fetchStorylines(activeWorldId);
+      fetchItems(activeWorldId);
       const chChannel = charRealtime(activeWorldId);
       const tlChannel = timelineRealtime(activeWorldId);
       const locChannel = locationsRealtime(activeWorldId);
@@ -277,15 +293,38 @@ function AuthenticatedApp() {
         ) : activeModule === 'relationships' && activeWorldId ? (
           <div className="p-4 h-full">
             <RelationshipGraph
-              worldId={activeWorldId}
-              characters={characters}
-              organizations={organizations}
-              locations={locations}
+              worldId={activeWorldId} characters={characters} organizations={organizations} locations={locations}
               onCreate={(sourceType, sourceId) => {
                 setRelSourceType(sourceType); setRelSourceId(sourceId);
                 setDrawerMode('create'); setEditId(null); setDrawerOpen(true);
               }}
               onDeleteRelation={async (id) => { await removeRel(id); }}
+            />
+          </div>
+        ) : activeModule === 'storylines' && activeWorldId ? (
+          <div className="p-6">
+            <StorylineList worldId={activeWorldId} activeId={storylineId}
+              onSelect={setStorylineId} onCreate={() => { /* handled internally */ }} />
+            {storylineId && (
+              <div className="mt-4">
+                <StorylineView storyline={storylines.find((s) => s.id === storylineId)}
+                  onSaveChapters={async (chapters) => {
+                    if (storylineId) await updateStoryline(storylineId, { chapters } as any);
+                  }} />
+              </div>
+            )}
+          </div>
+        ) : activeModule === 'notes' ? (
+          <div className="p-4 h-full">
+            <NotesView worldId={activeWorldId || undefined} />
+          </div>
+        ) : activeModule === 'items' && activeWorldId ? (
+          <div className="p-4">
+            <ItemsView worldId={activeWorldId}
+              onEdit={(id) => { setItemEditId(id); }}
+              onCreate={() => { setItemEditId(null); }}
+              editId={itemEditId}
+              onCloseEdit={() => setItemEditId(null)}
             />
           </div>
         ) : (
