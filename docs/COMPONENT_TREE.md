@@ -1,8 +1,15 @@
 # React 组件树
 
-## 已实现（阶段 0-1）
+## 已实现
 
-### 布局组件
+### 认证（阶段 2）
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| AuthProvider | src/contexts/AuthContext.tsx | Supabase session 管理 + signIn/signUp/signOut/resetPassword |
+| LoginPage | src/pages/LoginPage.tsx | 登录/注册/忘记密码，邮箱+密码模式 |
+| supabase client | src/lib/supabase.ts | Supabase 客户端，autoRefreshToken + persistSession |
+
+### 布局（阶段 1）
 | 组件 | 文件 | 说明 |
 |------|------|------|
 | Layout | src/components/layout/Layout.tsx | 顶层布局容器 |
@@ -11,7 +18,7 @@
 | Drawer | src/components/layout/Drawer.tsx | 右侧编辑抽屉面板 |
 | MobileNav | src/components/layout/MobileNav.tsx | 移动端底部 Tab 栏 + 菜单 |
 
-### 通用 UI 组件
+### 通用 UI（阶段 1）
 | 组件 | 文件 | 说明 |
 |------|------|------|
 | Card | src/components/ui/Card.tsx | 通用卡片容器 |
@@ -28,15 +35,15 @@
 
 ## 顶层结构（目标）
 ```
-App
-├── AuthProvider          (Supabase session 管理) ← 阶段 2
-│   ├── LoginPage         (登录/注册/找回密码) ← 阶段 2
-│   └── AuthenticatedApp  (需登录)
+App ✅
+├── AuthProvider ✅
+│   ├── LoginPage ✅
+│   └── AuthenticatedApp ✅ (路由守卫)
 │       └── Layout ✅
 │           ├── TopBar ✅
 │           ├── Sidebar ✅
-│           ├── MainArea   (根据路由渲染模块)
-│           │   ├── WorldSelector (世界观卡片网格) ← 阶段 4
+│           ├── MainArea
+│           │   ├── WorldSelector ← 阶段 4
 │           │   ├── CharacterList ← 阶段 6
 │           │   ├── TimelineView ← 阶段 7
 │           │   ├── MapView ← 阶段 9
@@ -47,12 +54,10 @@ App
 │           │   ├── NotesList ← 阶段 12
 │           │   └── CustomCategoryList ← 阶段 10
 │           └── Drawer ✅
-│               └── (各模块编辑表单动态渲染)
 ```
 
-## 待实现共享组件
+## 待实现
 - `RichTextEditor` — TipTap 封装 ← 阶段 5
 - `ImageUploader` — 图片上传+压缩+预览 ← 阶段 5
 - `SortableList` — dnd-kit 通用拖拽列表 ← 阶段 5
 - `TagPicker` — 标签选择器 ← 阶段 8
-- `SearchBar` — 搜索输入 ← 阶段 8
