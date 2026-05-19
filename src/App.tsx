@@ -5,6 +5,8 @@ import { useWorlds } from '@/stores/worlds';
 import { useCharacters } from '@/stores/characters';
 import { useTimeline } from '@/stores/timeline';
 import { useLocations } from '@/stores/locations';
+import { useCategories } from '@/stores/categories';
+import { useOrganizations } from '@/stores/organizations';
 import LoginPage from '@/pages/LoginPage';
 import Layout from '@/components/layout/Layout';
 import EmptyState from '@/components/ui/EmptyState';
@@ -16,6 +18,11 @@ import TimelineView from '@/components/timeline/TimelineView';
 import TimelineEditPanel from '@/components/timeline/TimelineEditPanel';
 import MapView from '@/components/map/MapView';
 import LocationEditPanel from '@/components/map/LocationEditPanel';
+import CategoryView from '@/components/categories/CategoryView';
+import CategoryEditPanel from '@/components/categories/CategoryEditPanel';
+import EntryEditPanel from '@/components/categories/EntryEditPanel';
+import OrganizationView from '@/components/organizations/OrganizationView';
+import OrganizationEditPanel from '@/components/organizations/OrganizationEditPanel';
 import type { SearchResult } from '@/lib/db';
 import { Globe, Plus, Users, Clock, Map, Loader2, Sparkles } from 'lucide-react';
 
@@ -49,10 +56,17 @@ function AuthenticatedApp() {
     locations, fetch: fetchLocations,
     startRealtime: locationsRealtime,
   } = useLocations();
+  const {
+    categories, activeCategoryId, fetchCategories,
+  } = useCategories();
+  const {
+    fetch: fetchOrgs, startRealtime: orgsRealtime,
+  } = useOrganizations();
   const [activeModule, setActiveModule] = useState('characters');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<'create' | 'edit'>('create');
+  const [drawerMode, setDrawerMode] = useState<'create' | 'edit' | 'category'>('create');
   const [editId, setEditId] = useState<string | null>(null);
+  const [categoryEditId, setCategoryEditId] = useState<string | null>(null);
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
 
@@ -67,10 +81,13 @@ function AuthenticatedApp() {
       fetchChars(activeWorldId);
       fetchTimeline(activeWorldId);
       fetchLocations(activeWorldId);
+      fetchCategories(activeWorldId);
+      fetchOrgs(activeWorldId);
       const chChannel = charRealtime(activeWorldId);
       const tlChannel = timelineRealtime(activeWorldId);
       const locChannel = locationsRealtime(activeWorldId);
-      return () => { chChannel.unsubscribe(); tlChannel.unsubscribe(); locChannel.unsubscribe(); };
+      const orgChannel = orgsRealtime(activeWorldId);
+      return () => { chChannel.unsubscribe(); tlChannel.unsubscribe(); locChannel.unsubscribe(); orgChannel.unsubscribe(); };
     }
   }, [activeWorldId, fetchChars, fetchTimeline, charRealtime, timelineRealtime]);
 
@@ -104,12 +121,16 @@ function AuthenticatedApp() {
   const closeDrawer = () => {
     setDrawerOpen(false);
     setEditId(null);
+    setCategoryEditId(null);
   };
 
   const drawerTitle = () => {
     if (activeModule === 'characters') return drawerMode === 'create' ? '新建角色' : '编辑角色';
     if (activeModule === 'timeline') return drawerMode === 'create' ? '新建事件' : '编辑事件';
     if (activeModule === 'map') return drawerMode === 'create' ? '新建地点' : '编辑地点';
+    if (activeModule === 'categories' && drawerMode === 'category') return '编辑分类';
+    if (activeModule === 'categories') return drawerMode === 'create' ? '新建条目' : '编辑条目';
+    if (activeModule === 'organizations') return drawerMode === 'create' ? '新建组织' : '编辑组织';
     return '新建';
   };
 
@@ -153,7 +174,11 @@ function AuthenticatedApp() {
         drawerTitle={drawerTitle()}
         onCloseDrawer={closeDrawer}
         onNewWorld={() => setNewWorldOpen(true)}
-        onNew={activeModule !== 'categories' ? openCreateDrawer : () => setDrawerOpen(true)}
+        onNew={() => {
+          if (activeModule === 'categories' && !activeCategoryId) {
+            setCategoryEditId(null); setDrawerMode('category'); setDrawerOpen(true);
+          } else { openCreateDrawer(); }
+        }}
         onSelectSearchResult={handleSearchResult}
         drawerContent={
           activeModule === 'characters' && activeWorldId ? (
@@ -162,6 +187,17 @@ function AuthenticatedApp() {
             <TimelineEditPanel worldId={activeWorldId} eventId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : activeModule === 'map' && activeWorldId ? (
             <LocationEditPanel worldId={activeWorldId} locationId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
+          ) : activeModule === 'categories' && activeWorldId ? (
+            categoryEditId ? (
+              <CategoryEditPanel worldId={activeWorldId} categoryId={categoryEditId} onClose={() => { setCategoryEditId(null); closeDrawer(); }} />
+            ) : activeCategoryId ? (
+              <EntryEditPanel worldId={activeWorldId} categoryId={activeCategoryId} entryId={drawerMode === 'edit' ? editId : null}
+                category={categories.find((c) => c.id === activeCategoryId)} onClose={closeDrawer} />
+            ) : (
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">请先选择或创建一个分类</p>
+            )
+          ) : activeModule === 'organizations' && activeWorldId ? (
+            <OrganizationEditPanel worldId={activeWorldId} orgId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">编辑面板将在后续阶段实现</p>
@@ -198,10 +234,24 @@ function AuthenticatedApp() {
         ) : activeModule === 'map' && activeWorldId ? (
           <div className="p-4 h-full">
             <MapView locations={locations} onCreate={(_x, _y) => {
-              setEditId(null);
-              setDrawerMode('create');
-              setDrawerOpen(true);
+              setEditId(null); setDrawerMode('create'); setDrawerOpen(true);
             }} onEdit={openEditDrawer} worldId={activeWorldId} />
+          </div>
+        ) : activeModule === 'categories' && activeWorldId ? (
+          <div className="p-4 h-full">
+            <CategoryView
+              worldId={activeWorldId}
+              onCreateCategory={() => { setCategoryEditId(null); setDrawerMode('category'); setDrawerOpen(true); }}
+              onEditCategory={(id) => { setCategoryEditId(id); setDrawerMode('category'); setDrawerOpen(true); }}
+              onEditEntry={(_catId, entryId) => {
+                setCategoryEditId(null); setEditId(entryId);
+                setDrawerMode(entryId ? 'edit' : 'create'); setDrawerOpen(true);
+              }}
+            />
+          </div>
+        ) : activeModule === 'organizations' && activeWorldId ? (
+          <div className="p-6">
+            <OrganizationView worldId={activeWorldId} onCreate={openCreateDrawer} onEdit={openEditDrawer} />
           </div>
         ) : (
           <div className="p-6">
