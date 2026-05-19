@@ -12,6 +12,12 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 // 通用 CRUD 工厂
 // ============================================
 
+async function getUserId(): Promise<string> {
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) throw new Error('Not authenticated');
+  return data.user.id;
+}
+
 function crud<T extends { id: string }>(table: string) {
   return {
     list: async (worldId: string) => {
@@ -31,7 +37,8 @@ function crud<T extends { id: string }>(table: string) {
     },
 
     create: async (row: Record<string, unknown>) => {
-      const { data, error } = await supabase.from(table).insert(row).select().single();
+      const userId = await getUserId();
+      const { data, error } = await supabase.from(table).insert({ ...row, user_id: userId }).select().single();
       if (error) throw error;
       return data as T;
     },
@@ -72,7 +79,8 @@ export const worldsApi = {
     return data as World[];
   },
   create: async (row: NewWorld) => {
-    const { data, error } = await supabase.from('worlds').insert(row).select().single();
+    const userId = await getUserId();
+    const { data, error } = await supabase.from('worlds').insert({ ...row, user_id: userId }).select().single();
     if (error) throw error;
     return data as World;
   },
@@ -126,7 +134,8 @@ export const notesApi = {
     return data as Note[];
   },
   create: async (row: NewNote) => {
-    const { data, error } = await supabase.from('notes').insert(row).select().single();
+    const userId = await getUserId();
+    const { data, error } = await supabase.from('notes').insert({ ...row, user_id: userId }).select().single();
     if (error) throw error;
     return data as Note;
   },
@@ -148,7 +157,8 @@ export const tagsApi = {
     return data as Tag[];
   },
   create: async (name: string, color?: string) => {
-    const { data, error } = await supabase.from('tags').insert({ name, color: color || '#7C5CBF' }).select().single();
+    const userId = await getUserId();
+    const { data, error } = await supabase.from('tags').insert({ name, color: color || '#7C5CBF', user_id: userId }).select().single();
     if (error) throw error;
     return data as Tag;
   },
