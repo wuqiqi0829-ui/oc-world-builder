@@ -8,11 +8,12 @@ interface Props {
   title: string;
   children: ReactNode;
   onEdit: () => void;
+  onEnter?: () => void;
   contentText?: string;
   maxWidth?: string;
 }
 
-export default function PreviewModal({ open, onClose, title, children, onEdit, contentText, maxWidth = 'max-w-2xl' }: Props) {
+export default function PreviewModal({ open, onClose, title, children, onEdit, onEnter, contentText, maxWidth = 'max-w-2xl' }: Props) {
   if (!open) return null;
 
   return (
@@ -39,7 +40,10 @@ export default function PreviewModal({ open, onClose, title, children, onEdit, c
           </span>
           <div className="flex gap-2">
             <button className="btn-ghost text-xs !px-3 !py-1.5" onClick={onClose}>关闭</button>
-            <button className="btn-primary text-xs !px-3 !py-1.5 flex items-center gap-1.5" onClick={onEdit}>
+            {onEnter && (
+              <button className="btn-primary text-xs !px-3 !py-1.5" onClick={onEnter}>进入世界观</button>
+            )}
+            <button className="btn-ghost text-xs !px-3 !py-1.5 flex items-center gap-1.5" onClick={onEdit}>
               <Edit3 size={12} /> 编辑
             </button>
           </div>

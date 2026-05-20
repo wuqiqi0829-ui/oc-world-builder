@@ -104,6 +104,7 @@ function AuthenticatedApp() {
   const [previewContent, setPreviewContent] = useState<ReactNode>(null);
   const [previewText, setPreviewText] = useState('');
   const [previewEditAction, setPreviewEditAction] = useState<() => void>(() => {});
+  const [previewEnterAction, setPreviewEnterAction] = useState<() => void>(() => {});
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [editWorldData, setEditWorldData] = useState<{ id: string; name: string; description: string; cover_url: string } | null>(null);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
@@ -166,11 +167,12 @@ function AuthenticatedApp() {
     setCategoryEditId(null);
   };
 
-  const openPreview = (title: string, content: ReactNode, text: string, onEdit: () => void) => {
+  const openPreview = (title: string, content: ReactNode, text: string, onEdit: () => void, onEnter?: () => void) => {
     setPreviewTitle(title);
     setPreviewContent(content);
     setPreviewText(text);
     setPreviewEditAction(() => onEdit);
+    setPreviewEnterAction(() => onEnter || (() => {}));
     setPreviewOpen(true);
   };
 
@@ -246,7 +248,7 @@ function AuthenticatedApp() {
           const w = worlds.find(x => x.id === id);
           if (w) openPreview(w.name, <WorldPreview world={w} />, w.description || '', () => {
             setEditWorldData({ id: w.id, name: w.name, description: w.description, cover_url: w.cover_url || '' });
-          });
+          }, () => { setActiveWorld(w.id); setShowWorldSelector(false); });
         }}
         onDeleteWorld={handleDeleteWorld}
         activeModule={activeModule}
@@ -419,6 +421,7 @@ function AuthenticatedApp() {
         title={previewTitle}
         contentText={previewText}
         onEdit={() => { setPreviewOpen(false); previewEditAction(); }}
+        onEnter={previewEnterAction ? () => { setPreviewOpen(false); previewEnterAction(); } : undefined}
       >
         {previewContent}
       </PreviewModal>
