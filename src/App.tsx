@@ -44,6 +44,7 @@ import ItemPreview from '@/components/items/ItemPreview';
 import EntryPreview from '@/components/categories/EntryPreview';
 import StorylinePreview from '@/components/storylines/StorylinePreview';
 import WorldPreview from '@/components/worlds/WorldPreview';
+import UserProfileModal from '@/components/user/UserProfileModal';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
   characters: { icon: Users, title: '人物设定库', description: '在这里创建和管理你的OC人设卡' },
@@ -109,6 +110,7 @@ function AuthenticatedApp() {
   const [editWorldData, setEditWorldData] = useState<{ id: string; name: string; description: string; cover_url: string } | null>(null);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
   const [showWorldSelector, setShowWorldSelector] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     fetchWorlds();
@@ -268,6 +270,7 @@ function AuthenticatedApp() {
         onShowAllWorlds={() => setShowWorldSelector(true)}
         userEmail={user?.email}
         onLogout={signOut}
+        onProfile={() => setProfileOpen(true)}
         drawerContent={
           activeModule === 'characters' && activeWorldId ? (
             <CharacterEditPanel worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
@@ -432,6 +435,11 @@ function AuthenticatedApp() {
         open={newWorldOpen}
         onClose={() => setNewWorldOpen(false)}
         onSave={handleCreateWorld}
+      />
+
+      <UserProfileModal
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
       />
 
       <NewWorldModal

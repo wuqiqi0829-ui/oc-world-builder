@@ -12,9 +12,10 @@ interface TopBarProps {
   onSelectSearchResult?: (result: SearchResult) => void;
   userEmail?: string;
   onLogout?: () => void;
+  onProfile?: () => void;
 }
 
-export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelectSearchResult, userEmail, onLogout }: TopBarProps) {
+export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelectSearchResult, userEmail, onLogout, onProfile }: TopBarProps) {
   const { theme, toggle } = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -104,6 +105,12 @@ export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelect
               <div className="px-3 py-2 text-xs text-[rgb(var(--color-text-secondary))] border-b border-[rgb(var(--color-border))] truncate">
                 {userEmail}
               </div>
+              <button
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-[rgb(var(--color-border))]"
+                onClick={onProfile}
+              >
+                <User size={12} /> 个人主页
+              </button>
               <button
                 className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-b-card"
                 onClick={onLogout}
