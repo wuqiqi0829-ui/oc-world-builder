@@ -100,7 +100,7 @@ export default function CharacterList({ characters, activeId, onSelect, onCreate
           }
         />
       ) : (
-        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
           {filtered.map((c) => (
             <CharacterCard
               key={c.id}
