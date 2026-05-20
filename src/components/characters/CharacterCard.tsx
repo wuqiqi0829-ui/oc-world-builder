@@ -10,7 +10,8 @@ interface Props {
 
 export default function CharacterCard({ character, selected, onClick }: Props) {
   const avatar = character.images?.[0]?.url;
-  const badges = [character.gender, character.age, character.occupation, character.faction].filter(Boolean);
+  const infoTags = [character.gender, character.age].filter(Boolean);
+  const typeTags = [character.occupation, character.faction].filter(Boolean);
 
   return (
     <Card hover padding="sm" onClick={onClick} className={clsx(selected && 'ring-2 ring-primary-500')}>
@@ -24,17 +25,26 @@ export default function CharacterCard({ character, selected, onClick }: Props) {
             </div>
           )}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1 flex flex-col justify-center">
           <h3 className="font-semibold text-base truncate">{character.name}</h3>
-          {character.nickname && <p className="text-sm text-[rgb(var(--color-text-secondary))] truncate mt-0.5">「{character.nickname}」</p>}
+          {character.nickname && <p className="text-sm text-[rgb(var(--color-text-secondary))] truncate">「{character.nickname}」</p>}
         </div>
-        {badges.length > 0 && (
-          <div className="flex flex-wrap gap-1 content-start self-start flex-shrink-0 max-w-[60%] justify-end">
-            {badges.map((b) => (
-              <span key={b} className="text-[10px] bg-[rgb(var(--color-bg))] px-1.5 py-0.5 rounded-full whitespace-nowrap">{b}</span>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-col gap-1 flex-shrink-0">
+          {infoTags.length > 0 && (
+            <div className="flex gap-1">
+              {infoTags.map((t) => (
+                <span key={t} className="text-[10px] bg-[rgb(var(--color-bg))] px-1.5 py-0.5 rounded-full">{t}</span>
+              ))}
+            </div>
+          )}
+          {typeTags.length > 0 && (
+            <div className="flex gap-1">
+              {typeTags.map((t) => (
+                <span key={t} className="text-[10px] bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded-full">{t}</span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </Card>
   );
