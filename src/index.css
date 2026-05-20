@@ -72,6 +72,9 @@
   .ProseMirror hr { @apply my-4 border-[rgb(var(--color-border))]; }
   .ProseMirror img { @apply max-w-full h-auto rounded-lg my-2; }
   .ProseMirror p { @apply my-1; }
+  /* 预览中空段落保留高度 */
+  .prose p:empty::after { content: '\00a0'; }
+  .prose p { min-height: 1.2em; }
 }
 
 /* 打印样式 */
