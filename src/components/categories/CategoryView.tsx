@@ -10,9 +10,10 @@ interface Props {
   onCreateCategory: () => void;
   onEditCategory: (id: string) => void;
   onEditEntry: (categoryId: string, entryId: string | null) => void;
+  onPreviewEntry?: (categoryId: string, entryId: string) => void;
 }
 
-export default function CategoryView({ worldId, onCreateCategory, onEditCategory, onEditEntry }: Props) {
+export default function CategoryView({ worldId, onCreateCategory, onEditCategory, onEditEntry, onPreviewEntry }: Props) {
   const { categories, entries, activeCategoryId, setActiveCategory, fetchCategories, fetchEntries } = useCategories();
 
   useEffect(() => { fetchCategories(worldId); }, [worldId, fetchCategories]);
@@ -93,7 +94,10 @@ export default function CategoryView({ worldId, onCreateCategory, onEditCategory
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {currentEntries.map((entry) => (
-                  <Card key={entry.id} hover padding="sm" onClick={() => onEditEntry(activeCategoryId!, entry.id)}>
+                  <Card key={entry.id} hover padding="sm" onClick={() => {
+                  if (onPreviewEntry && entry.id) onPreviewEntry(activeCategoryId!, entry.id);
+                  else onEditEntry(activeCategoryId!, entry.id);
+                }}>
                     <div className="flex gap-3">
                       {entry.images?.[0]?.url && (
                         <img src={entry.images[0].url} alt="" className="w-12 h-12 rounded-lg object-cover" />

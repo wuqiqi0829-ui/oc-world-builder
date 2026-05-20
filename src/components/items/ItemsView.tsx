@@ -16,9 +16,10 @@ interface Props {
   onCreate: () => void;
   editId: string | null;
   onCloseEdit: () => void;
+  onPreview?: (id: string) => void;
 }
 
-export default function ItemsView({ worldId, onEdit, onCreate, editId, onCloseEdit }: Props) {
+export default function ItemsView({ worldId, onEdit, onCreate, editId, onCloseEdit, onPreview }: Props) {
   const { items, fetch, create, update, remove } = useItems();
   const [form, setForm] = useState({ name: '', category: '', description: '' });
   const [images, setImages] = useState<Item['images']>([]);
@@ -71,7 +72,7 @@ export default function ItemsView({ worldId, onEdit, onCreate, editId, onCloseEd
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {filtered.map((item) => (
-                <Card key={item.id} hover padding="sm" onClick={() => onEdit(item.id)}
+                <Card key={item.id} hover padding="sm" onClick={() => (onPreview || onEdit)(item.id)}
                   className={editId === item.id ? 'ring-2 ring-primary-500' : ''}>
                   <div className="flex gap-2">
                     {item.images?.[0]?.url && <img src={item.images[0].url} alt="" className="w-10 h-10 rounded-lg object-cover" />}

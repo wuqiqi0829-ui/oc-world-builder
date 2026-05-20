@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useWorlds } from '@/stores/worlds';
@@ -18,7 +18,6 @@ import WorldSelector from '@/components/worlds/WorldSelector';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import CharacterList from '@/components/characters/CharacterList';
 import CharacterEditPanel from '@/components/characters/CharacterEditPanel';
-import CharacterDetail from '@/components/characters/CharacterDetail';
 import TimelineView from '@/components/timeline/TimelineView';
 import TimelineEditPanel from '@/components/timeline/TimelineEditPanel';
 import MapView from '@/components/map/MapView';
@@ -28,10 +27,6 @@ import CategoryEditPanel from '@/components/categories/CategoryEditPanel';
 import EntryEditPanel from '@/components/categories/EntryEditPanel';
 import OrganizationView from '@/components/organizations/OrganizationView';
 import OrganizationEditPanel from '@/components/organizations/OrganizationEditPanel';
-import OrganizationDetail from '@/components/organizations/OrganizationDetail';
-import TimelineEventDetail from '@/components/timeline/TimelineEventDetail';
-import StorylineDetail from '@/components/storylines/StorylineDetail';
-import EntryDetail from '@/components/categories/EntryDetail';
 import RelationshipGraph from '@/components/relationships/RelationshipGraph';
 import RelationshipEditPanel from '@/components/relationships/RelationshipEditPanel';
 import StorylineList from '@/components/storylines/StorylineList';
@@ -40,6 +35,14 @@ import ItemsView from '@/components/items/ItemsView';
 import type { SearchResult } from '@/lib/db';
 import { exportAllData, downloadJson, importAllData } from '@/lib/backup';
 import { Globe, Plus, Users, Clock, Map, Loader2 } from 'lucide-react';
+import PreviewModal from '@/components/ui/PreviewModal';
+import CharacterPreview from '@/components/characters/CharacterPreview';
+import TimelineEventPreview from '@/components/timeline/TimelineEventPreview';
+import LocationPreview from '@/components/map/LocationPreview';
+import OrganizationPreview from '@/components/organizations/OrganizationPreview';
+import ItemPreview from '@/components/items/ItemPreview';
+import EntryPreview from '@/components/categories/EntryPreview';
+import StorylinePreview from '@/components/storylines/StorylinePreview';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
   characters: { icon: Users, title: '人物设定库', description: '在这里创建和管理你的OC人设卡' },
@@ -95,14 +98,14 @@ function AuthenticatedApp() {
   const [relSourceType, setRelSourceType] = useState('');
   const [relSourceId, setRelSourceId] = useState('');
   const [itemEditId, setItemEditId] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewTitle, setPreviewTitle] = useState('');
+  const [previewContent, setPreviewContent] = useState<ReactNode>(null);
+  const [previewText, setPreviewText] = useState('');
+  const [previewEditAction, setPreviewEditAction] = useState<() => void>(() => {});
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
   const [showWorldSelector, setShowWorldSelector] = useState(false);
-  const [previewCharId, setPreviewCharId] = useState<string | null>(null);
-  const [previewOrgId, setPreviewOrgId] = useState<string | null>(null);
-  const [previewEntryId, setPreviewEntryId] = useState<string | null>(null);
-  const [previewEventId, setPreviewEventId] = useState<string | null>(null);
-  const [previewStoryId, setPreviewStoryId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWorlds();
@@ -159,6 +162,14 @@ function AuthenticatedApp() {
     setDrawerOpen(false);
     setEditId(null);
     setCategoryEditId(null);
+  };
+
+  const openPreview = (title: string, content: ReactNode, text: string, onEdit: () => void) => {
+    setPreviewTitle(title);
+    setPreviewContent(content);
+    setPreviewText(text);
+    setPreviewEditAction(() => onEdit);
+    setPreviewOpen(true);
   };
 
   const drawerTitle = () => {
@@ -295,77 +306,45 @@ function AuthenticatedApp() {
             }}
           />
         ) : activeModule === 'characters' && activeWorldId ? (
-          <div className="p-6 flex gap-6 items-start">
-            <div className={previewCharId ? 'w-72 flex-shrink-0' : 'flex-1'}>
-              <CharacterList characters={characters} activeId={previewCharId} onSelect={(id) => setPreviewCharId(id)} onCreate={openCreateDrawer} />
-            </div>
-            {previewCharId && characters.find(c => c.id === previewCharId) && (
-              <div className="flex-1 sticky top-4">
-                <CharacterDetail
-                  character={characters.find(c => c.id === previewCharId)!}
-                  onEdit={() => { setEditId(previewCharId); setDrawerMode('edit'); setDrawerOpen(true); }}
-                  onClose={() => setPreviewCharId(null)}
-                />
-              </div>
-            )}
+          <div className="p-6">
+            <CharacterList characters={characters} activeId={null}
+                onSelect={(id) => { const c = characters.find(x => x.id === id); if (c) openPreview(c.name, <CharacterPreview character={c} />, [c.appearance,c.personality,c.background,c.abilities,c.weaknesses].join(''), () => openEditDrawer(id)); }}
+                onCreate={openCreateDrawer} />
           </div>
         ) : activeModule === 'timeline' && activeWorldId ? (
-          <div className="p-6 flex gap-6 items-start">
-            <div className={previewEventId ? 'w-72 flex-shrink-0' : 'flex-1'}>
-              <TimelineView events={events} onCreate={openCreateDrawer} onEdit={(id) => setPreviewEventId(id)} />
-            </div>
-            {previewEventId && events.find(e => e.id === previewEventId) && (
-              <div className="flex-1 sticky top-4">
-                <TimelineEventDetail event={events.find(e => e.id === previewEventId)!}
-                  onEdit={() => { setEditId(previewEventId); setDrawerMode('edit'); setDrawerOpen(true); }}
-                  onClose={() => setPreviewEventId(null)} />
-              </div>
-            )}
+          <div className="p-6">
+            <TimelineView events={events} onCreate={openCreateDrawer}
+                onEdit={(id) => openEditDrawer(id)}
+                onPreview={(id) => { const e = events.find(x => x.id === id); if (e) openPreview(e.title, <TimelineEventPreview event={e} />, e.description, () => openEditDrawer(id)); }} />
           </div>
         ) : activeModule === 'map' && activeWorldId ? (
           <div className="p-4 h-full">
             <MapView locations={locations} onCreate={(_x, _y) => {
               setEditId(null); setDrawerMode('create'); setDrawerOpen(true);
-            }} onEdit={openEditDrawer} worldId={activeWorldId} />
+            }} onEdit={(id) => { const l = locations.find(x => x.id === id); if (l) openPreview(l.name, <LocationPreview location={l} />, l.description, () => openEditDrawer(id)); }}
+              worldId={activeWorldId} />
           </div>
         ) : activeModule === 'categories' && activeWorldId ? (
-          <div className="p-4 h-full flex gap-4 items-start">
-            <div className={previewEntryId ? 'w-72 flex-shrink-0' : 'flex-1'}>
-              <CategoryView
-                worldId={activeWorldId}
-                onCreateCategory={() => { setCategoryEditId(null); setDrawerMode('category'); setDrawerOpen(true); }}
-                onEditCategory={(id) => { setCategoryEditId(id); setDrawerMode('category'); setDrawerOpen(true); }}
-                onEditEntry={(_catId, entryId) => {
-                  if (entryId) { setPreviewEntryId(entryId); } else {
-                    setCategoryEditId(null); setEditId(null);
-                    setDrawerMode('create'); setDrawerOpen(true);
-                  }
-                }}
+          <div className="p-4 h-full">
+            <CategoryView
+              worldId={activeWorldId}
+              onCreateCategory={() => { setCategoryEditId(null); setDrawerMode('category'); setDrawerOpen(true); }}
+              onEditCategory={(id) => { setCategoryEditId(id); setDrawerMode('category'); setDrawerOpen(true); }}
+              onEditEntry={(_catId, entryId) => {
+                setCategoryEditId(null); setEditId(entryId);
+                setDrawerMode(entryId ? 'edit' : 'create'); setDrawerOpen(true);
+              }}
+              onPreviewEntry={(catId, entryId) => {
+                const catEntries = entries[catId] || [];
+                const ent = catEntries.find(e => e.id === entryId);
+                if (ent) openPreview(ent.name, <EntryPreview entry={ent} category={categories.find(c => c.id === catId)} />, ent.description + Object.values(ent.field_values||{}).join(''), () => { setEditId(entryId); setDrawerMode('edit'); setDrawerOpen(true); });
+              }}
             />
-            </div>
-            {previewEntryId && activeCategoryId && entries[activeCategoryId]?.find(e => e.id === previewEntryId) && (
-              <div className="flex-1 sticky top-4">
-                <EntryDetail
-                  entry={entries[activeCategoryId].find(e => e.id === previewEntryId)!}
-                  category={categories.find(c => c.id === activeCategoryId)}
-                  onEdit={() => { setEditId(previewEntryId); setDrawerMode('edit'); setDrawerOpen(true); }}
-                  onClose={() => setPreviewEntryId(null)} />
-              </div>
-            )}
           </div>
         ) : activeModule === 'organizations' && activeWorldId ? (
-          <div className="p-6 flex gap-6 items-start">
-            <div className={previewOrgId ? 'w-72 flex-shrink-0' : 'flex-1'}>
-              <OrganizationView worldId={activeWorldId} onCreate={openCreateDrawer} onEdit={(id) => setPreviewOrgId(id)} />
-            </div>
-            {previewOrgId && (
-              <div className="flex-1 sticky top-4">
-                <OrganizationDetail
-                  organization={organizations.find(o => o.id === previewOrgId)!}
-                  onEdit={() => { setEditId(previewOrgId); setDrawerMode('edit'); setDrawerOpen(true); }}
-                  onClose={() => setPreviewOrgId(null)} />
-              </div>
-            )}
+          <div className="p-6">
+            <OrganizationView worldId={activeWorldId} onCreate={openCreateDrawer}
+                onEdit={(id) => { const o = organizations.find(x => x.id === id); if (o) openPreview(o.name, <OrganizationPreview organization={o} />, o.description, () => openEditDrawer(id)); }} />
           </div>
         ) : activeModule === 'relationships' && activeWorldId ? (
           <div className="p-4 h-full">
@@ -379,18 +358,10 @@ function AuthenticatedApp() {
             />
           </div>
         ) : activeModule === 'storylines' && activeWorldId ? (
-          <div className="p-6 flex gap-6 items-start">
-            <div className={previewStoryId ? 'w-72 flex-shrink-0' : 'flex-1'}>
-              <StorylineList worldId={activeWorldId} activeId={previewStoryId}
-                onSelect={(id) => setPreviewStoryId(id)} onCreate={() => {}} />
-            </div>
-            {previewStoryId && storylines.find(s => s.id === previewStoryId) && (
-              <div className="flex-1 sticky top-4">
-                <StorylineDetail storyline={storylines.find(s => s.id === previewStoryId)!}
-                  onEdit={() => { setEditId(previewStoryId); setDrawerMode('edit'); setDrawerOpen(true); }}
-                  onClose={() => setPreviewStoryId(null)} />
-              </div>
-            )}
+          <div className="p-6">
+            <StorylineList worldId={activeWorldId} activeId={null}
+              onSelect={(id) => { const s = storylines.find(x => x.id === id); if (s) openPreview(s.title, <StorylinePreview storyline={s} />, s.description + (s.chapters||[]).map(c=>c.content).join(''), () => openEditDrawer(id)); }}
+              onCreate={() => {}} />
           </div>
         ) : activeModule === 'notes' ? (
           <div className="p-4 h-full">
@@ -399,6 +370,7 @@ function AuthenticatedApp() {
         ) : activeModule === 'items' && activeWorldId ? (
           <div className="p-4">
             <ItemsView worldId={activeWorldId}
+              onPreview={(id) => { const { items } = useItems.getState(); const it = items.find(x => x.id === id); if (it) openPreview(it.name, <ItemPreview item={it} />, it.description + Object.values(it.attributes||{}).join(''), () => { setItemEditId(id); }); }}
               onEdit={(id) => { setItemEditId(id); }}
               onCreate={() => { setItemEditId(null); }}
               editId={itemEditId}
@@ -431,6 +403,16 @@ function AuthenticatedApp() {
           </div>
         )}
       </Layout>
+
+      <PreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={previewTitle}
+        contentText={previewText}
+        onEdit={() => { setPreviewOpen(false); previewEditAction(); }}
+      >
+        {previewContent}
+      </PreviewModal>
 
       <NewWorldModal
         open={newWorldOpen}

@@ -11,8 +11,8 @@ import EmptyState from '@/components/ui/EmptyState';
 import { Clock, GripVertical, ChevronDown, ChevronUp, ArrowUpDown, ImageIcon } from 'lucide-react';
 import clsx from 'clsx';
 
-function TimelineNode({ event, index, onEdit }: {
-  event: TimelineEvent; index: number; onEdit: (id: string) => void;
+function TimelineNode({ event, index, onPreview, onEdit }: {
+  event: TimelineEvent; index: number; onPreview?: (id: string) => void; onEdit?: (id: string) => void;
 }) {
   const { update } = useTimeline();
   const isLeft = index % 2 === 0;
@@ -44,7 +44,7 @@ function TimelineNode({ event, index, onEdit }: {
             'card cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all duration-150',
             event.collapsed ? 'py-2' : ''
           )}
-          onClick={() => onEdit(event.id)}
+          onClick={() => (onPreview || onEdit)?.(event.id)}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -84,9 +84,10 @@ interface Props {
   events: TimelineEvent[];
   onCreate: () => void;
   onEdit: (id: string) => void;
+  onPreview?: (id: string) => void;
 }
 
-export default function TimelineView({ events, onCreate, onEdit }: Props) {
+export default function TimelineView({ events, onCreate, onEdit, onPreview }: Props) {
   const { sortOrder, setSortOrder, reorder } = useTimeline();
   const [showCollapsed, setShowCollapsed] = useState(true);
 
@@ -143,7 +144,7 @@ export default function TimelineView({ events, onCreate, onEdit }: Props) {
 
               <div className="space-y-1">
                 {sorted.map((event, index) => (
-                  <TimelineNode key={event.id} event={event} index={index} onEdit={onEdit} />
+                  <TimelineNode key={event.id} event={event} index={index} onPreview={onPreview} onEdit={onEdit} />
                 ))}
               </div>
             </div>
