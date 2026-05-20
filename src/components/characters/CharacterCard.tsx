@@ -28,8 +28,8 @@ export default function CharacterCard({ character, selected, onClick }: Props) {
           <h3 className="font-medium text-sm truncate">{character.name}</h3>
           {character.nickname && <p className="text-[11px] text-[rgb(var(--color-text-secondary))] truncate">「{character.nickname}」</p>}
           <div className="flex items-center gap-1 mt-0.5">
-            {character.gender && <span className="text-[10px] bg-[rgb(var(--color-bg))] px-1.5 py-0.5 rounded">{character.gender}</span>}
-            {character.age && <span className="text-[10px] bg-[rgb(var(--color-bg))] px-1.5 py-0.5 rounded">{character.age}</span>}
+            {character.gender && <span className="text-[10px] bg-[rgb(var(--color-bg))] px-1.5 py-0.5 rounded-full">{character.gender}</span>}
+            {character.age && <span className="text-[10px] bg-[rgb(var(--color-bg))] px-1.5 py-0.5 rounded-full">{character.age}</span>}
           </div>
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
