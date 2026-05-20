@@ -1,4 +1,5 @@
 import { useEditor, EditorContent } from '@tiptap/react';
+import { useEffect } from 'react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -40,6 +41,13 @@ export default function RichTextEditor({
   });
 
   if (!editor) return null;
+
+  // Sync external content changes into the editor (e.g. when editing different item)
+  useEffect(() => {
+    if (!editor.isFocused && content !== editor.getHTML()) {
+      editor.commands.setContent(content || '');
+    }
+  }, [content, editor]);
 
   const addImage = async () => {
     const input = document.createElement('input');
