@@ -242,7 +242,12 @@ function AuthenticatedApp() {
       <Layout
         worlds={worlds}
         activeWorldId={activeWorldId}
-        onSelectWorld={setActiveWorld}
+        onSelectWorld={(id) => {
+          const w = worlds.find(x => x.id === id);
+          if (w) openPreview(w.name, <WorldPreview world={w} />, w.description || '', () => {
+            setEditWorldData({ id: w.id, name: w.name, description: w.description, cover_url: w.cover_url || '' });
+          });
+        }}
         onDeleteWorld={handleDeleteWorld}
         activeModule={activeModule}
         onSelectModule={setActiveModule}
