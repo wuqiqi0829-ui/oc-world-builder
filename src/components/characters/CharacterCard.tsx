@@ -26,10 +26,10 @@ export default function CharacterCard({ character, selected, onClick }: Props) {
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-medium text-sm truncate">{character.name}</h3>
+          {character.nickname && <p className="text-[11px] text-[rgb(var(--color-text-secondary))] truncate">「{character.nickname}」</p>}
           <div className="flex items-center gap-2 mt-0.5">
             {character.gender && <span className="text-[11px] text-[rgb(var(--color-text-secondary))]">{character.gender}</span>}
             {character.age && <span className="text-[11px] text-[rgb(var(--color-text-secondary))]">{character.age}</span>}
-            {character.nickname && <span className="text-[11px] text-[rgb(var(--color-text-secondary))] truncate">「{character.nickname}」</span>}
           </div>
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
