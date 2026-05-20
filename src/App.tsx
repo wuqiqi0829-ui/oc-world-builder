@@ -302,10 +302,6 @@ function AuthenticatedApp() {
             onSelect={(id) => { setActiveWorld(id); setShowWorldSelector(false); }}
             onNew={() => setNewWorldOpen(true)}
             onDelete={handleDeleteWorld}
-            onRename={async (id) => {
-              const name = prompt('重命名世界观：', worlds.find(w => w.id === id)?.name);
-              if (name && name.trim()) await updateWorld(id, { name: name.trim() });
-            }}
             onPreview={(id) => {
               const w = worlds.find(x => x.id === id);
               if (w) openPreview(w.name, <WorldPreview world={w} />, w.description || '', () => {

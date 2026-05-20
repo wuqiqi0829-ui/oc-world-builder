@@ -1,4 +1,4 @@
-import { Plus, Globe, Edit3, Trash2 } from 'lucide-react';
+import { Plus, Globe, Trash2 } from 'lucide-react';
 import type { World } from '@/lib/database';
 import Card from '@/components/ui/Card';
 
@@ -7,11 +7,10 @@ interface Props {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
-  onRename: (id: string) => void;
   onPreview?: (id: string) => void;
 }
 
-export default function WorldSelector({ worlds, onSelect, onNew, onDelete, onRename, onPreview }: Props) {
+export default function WorldSelector({ worlds, onSelect, onNew, onDelete, onPreview }: Props) {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -67,14 +66,7 @@ export default function WorldSelector({ worlds, onSelect, onNew, onDelete, onRen
                   >进入世界观</button>
                 )}
               </Card>
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                <button
-                  className="p-1.5 rounded-full bg-white dark:bg-gray-800 shadow text-[rgb(var(--color-text-secondary))] hover:text-primary-500"
-                  onClick={(e) => { e.stopPropagation(); onRename(world.id); }}
-                  title="重命名"
-                >
-                  <Edit3 size={14} />
-                </button>
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   className="p-1.5 rounded-full bg-white dark:bg-gray-800 shadow text-red-400 hover:text-red-500"
                   onClick={(e) => { e.stopPropagation(); onDelete(world.id); }}
