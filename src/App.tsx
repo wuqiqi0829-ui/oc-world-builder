@@ -266,6 +266,8 @@ function AuthenticatedApp() {
         onExport={handleExport}
         onImport={handleImport}
         onShowAllWorlds={() => setShowWorldSelector(true)}
+        userEmail={user?.email}
+        onLogout={signOut}
         drawerContent={
           activeModule === 'characters' && activeWorldId ? (
             <CharacterEditPanel worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />

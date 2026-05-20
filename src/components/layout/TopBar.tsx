@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Moon, Sun, Download, Upload, Plus, Globe } from 'lucide-react';
+import { Search, Moon, Sun, Download, Upload, Plus, Globe, LogOut, User } from 'lucide-react';
 import { useTheme } from '@/stores/theme';
 import { globalSearch, type SearchResult } from '@/lib/db';
 import SearchResults from '@/components/ui/SearchResults';
@@ -10,9 +10,11 @@ interface TopBarProps {
   onExport?: () => void;
   onImport?: () => void;
   onSelectSearchResult?: (result: SearchResult) => void;
+  userEmail?: string;
+  onLogout?: () => void;
 }
 
-export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelectSearchResult }: TopBarProps) {
+export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelectSearchResult, userEmail, onLogout }: TopBarProps) {
   const { theme, toggle } = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -92,6 +94,25 @@ export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelect
         <button className="btn-ghost h-9 w-9 p-0 flex items-center justify-center" title="导入" onClick={onImport}>
           <Upload size={18} />
         </button>
+        {userEmail && (
+          <div className="relative group">
+            <button className="btn-ghost h-9 px-2 flex items-center gap-1.5 text-xs" title={userEmail}>
+              <User size={14} />
+              <span className="hidden lg:inline max-w-[120px] truncate">{userEmail.split('@')[0]}</span>
+            </button>
+            <div className="absolute right-0 top-full mt-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-card shadow-lg z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all min-w-[160px]">
+              <div className="px-3 py-2 text-xs text-[rgb(var(--color-text-secondary))] border-b border-[rgb(var(--color-border))] truncate">
+                {userEmail}
+              </div>
+              <button
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-b-card"
+                onClick={onLogout}
+              >
+                <LogOut size={12} /> 退出登录
+              </button>
+            </div>
+          </div>
+        )}
         <button
           className="btn-ghost h-9 w-9 p-0 flex items-center justify-center"
           title={theme === 'dark' ? '切换亮色' : '切换暗色'}
