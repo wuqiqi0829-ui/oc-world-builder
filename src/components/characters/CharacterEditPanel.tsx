@@ -28,7 +28,6 @@ const emptyForm = {
 export default function CharacterEditPanel({ worldId, characterId, onClose }: Props) {
   const { characters, create, update, remove } = useCharacters();
   const isNew = !characterId;
-  const existing = characterId ? characters.find((c) => c.id === characterId) : null;
 
   const [form, setForm] = useState(emptyForm);
   const [images, setImages] = useState<{ url: string; label: string; order: number }[]>([]);
@@ -36,26 +35,33 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
   const [createdId, setCreatedId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (existing) {
+    if (!characterId) {
+      setForm(emptyForm);
+      setImages([]);
+      setCreatedId(null);
+      return;
+    }
+    const ch = characters.find((c) => c.id === characterId);
+    if (ch) {
       setForm({
-        name: existing.name || '',
-        nickname: existing.nickname || '',
-        gender: existing.gender || '',
-        age: existing.age || '',
-        appearance: existing.appearance || '',
-        personality: existing.personality || '',
-        background: existing.background || '',
-        abilities: existing.abilities || '',
-        catchphrase: existing.catchphrase || '',
-        occupation: existing.occupation || '',
-        faction: existing.faction || '',
+        name: ch.name || '',
+        nickname: ch.nickname || '',
+        gender: ch.gender || '',
+        age: ch.age || '',
+        appearance: ch.appearance || '',
+        personality: ch.personality || '',
+        background: ch.background || '',
+        abilities: ch.abilities || '',
+        catchphrase: ch.catchphrase || '',
+        occupation: ch.occupation || '',
+        faction: ch.faction || '',
       });
-      setImages(existing.images || []);
+      setImages(ch.images || []);
     } else {
       setForm(emptyForm);
       setImages([]);
     }
-  }, [existing, characterId]);
+  }, [characterId, characters]);
 
   const buildData = useCallback(() => ({
     name: form.name,
