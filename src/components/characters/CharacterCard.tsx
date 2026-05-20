@@ -11,7 +11,6 @@ interface Props {
 export default function CharacterCard({ character, selected, onClick }: Props) {
   const avatar = character.images?.[0]?.url;
   const infoTags = [character.gender, character.age].filter(Boolean);
-  const typeTags = [character.occupation, character.faction].filter(Boolean);
 
   return (
     <Card hover padding="sm" onClick={onClick} className={clsx(selected && 'ring-2 ring-primary-500')}>
@@ -36,12 +35,8 @@ export default function CharacterCard({ character, selected, onClick }: Props) {
                 ))}
               </div>
             )}
-            {typeTags.length > 0 && (
-              <div className="flex gap-1.5">
-                {typeTags.map((t) => (
-                  <span key={t} className="text-[10px] bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded-full">{t}</span>
-                ))}
-              </div>
+            {character.catchphrase && (
+              <p className="text-[10px] text-[rgb(var(--color-text-secondary))] truncate">「{character.catchphrase}」</p>
             )}
           </div>
         </div>
