@@ -56,12 +56,12 @@ export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelect
   };
 
   return (
-    <header className="h-14 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex items-center gap-3 px-4 flex-shrink-0">
-      <h1 className="text-base font-semibold text-primary-600 whitespace-nowrap hidden sm:block">
+    <header className="h-14 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex items-center gap-4 px-4 flex-shrink-0">
+      <h1 className="text-base font-semibold text-primary-600 whitespace-nowrap hidden md:block w-28 flex-shrink-0">
         OC Builder
       </h1>
 
-      <div className="flex-1 max-w-md relative" ref={containerRef}>
+      <div className="flex-1 max-w-lg mx-auto relative" ref={containerRef}>
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-secondary))] z-10" />
         <input
           ref={inputRef}
@@ -79,7 +79,7 @@ export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelect
         )}
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 flex-shrink-0">
         <button className="btn-ghost h-9 w-9 p-0 flex items-center justify-center" title="新建世界观" onClick={onNewWorld}>
           <Globe size={18} />
         </button>
