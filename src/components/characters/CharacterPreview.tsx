@@ -7,7 +7,13 @@ interface Props { character: Character }
 export default function CharacterPreview({ character }: Props) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
-  const basicInfo = [character.nickname ? `「${character.nickname}」` : '', character.gender, character.age, character.occupation, character.faction].filter(Boolean).join(' | ');
+  const basicInfo = [
+    character.nickname && `昵称：${character.nickname}`,
+    character.gender && `性别：${character.gender}`,
+    character.age && `年龄：${character.age}`,
+    character.occupation && `职业：${character.occupation}`,
+    character.faction && `阵营：${character.faction}`,
+  ].filter(Boolean).join(' | ');
 
   const fields = [
     ['口头禅', character.catchphrase],
