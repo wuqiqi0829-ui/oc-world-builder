@@ -104,10 +104,10 @@ export default function Sidebar({
                 <div
                   key={w.id}
                   className={clsx(
-                    'group flex gap-2.5 rounded-card p-2 cursor-pointer transition-all',
+                    'group flex gap-2.5 rounded-card p-2 cursor-pointer transition-all border',
                     activeWorldId === w.id
-                      ? 'bg-primary-100/60 dark:bg-primary-900/40 shadow-[0_0_12px_rgba(124,92,191,0.15)]'
-                      : 'hover:bg-[rgb(var(--color-border))]/50'
+                      ? 'bg-primary-100/60 dark:bg-primary-900/40 border-primary-300 shadow-[0_0_12px_rgba(124,92,191,0.15)]'
+                      : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-border))]/50'
                   )}
                   onClick={() => onSelectWorld(w.id)}
                 >
