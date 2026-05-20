@@ -9,6 +9,7 @@ import clsx from 'clsx';
 interface World {
   id: string;
   name: string;
+  cover_url?: string | null;
 }
 
 interface SidebarProps {
@@ -97,28 +98,38 @@ export default function Sidebar({
               还没有世界观，点击上方 + 新建
             </p>
           ) : (
-            worlds.map((w) => (
-              <div
-                key={w.id}
-                className={clsx(
-                  'group flex items-center gap-2 px-2 py-1.5 rounded-btn cursor-pointer text-sm transition-colors',
-                  activeWorldId === w.id
-                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
-                    : 'hover:bg-[rgb(var(--color-border))]'
-                )}
-                onClick={() => onSelectWorld(w.id)}
-              >
-                <Globe size={14} className="flex-shrink-0" />
-                <span className="truncate flex-1">{w.name}</span>
-                <button
-                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all"
-                  onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
-                  title="删除"
+            <div className="grid grid-cols-2 gap-1.5">
+              {worlds.map((w) => (
+                <div
+                  key={w.id}
+                  className={clsx(
+                    'group relative rounded-card cursor-pointer transition-all overflow-hidden border',
+                    activeWorldId === w.id
+                      ? 'border-primary-400 ring-1 ring-primary-300'
+                      : 'border-[rgb(var(--color-border))] hover:border-primary-300'
+                  )}
+                  onClick={() => onSelectWorld(w.id)}
                 >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))
+                  <div className="aspect-[4/3] bg-[rgb(var(--color-bg))] flex items-center justify-center overflow-hidden">
+                    {w.cover_url ? (
+                      <img src={w.cover_url} alt={w.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Globe size={20} className="text-[rgb(var(--color-border))]" />
+                    )}
+                  </div>
+                  <div className="px-2 py-1.5 flex items-center justify-between">
+                    <span className="text-[11px] font-medium truncate">{w.name}</span>
+                    <button
+                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all flex-shrink-0"
+                      onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
+                      title="删除"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
