@@ -14,7 +14,6 @@ export default function CharacterPreview({ character }: Props) {
     ['性格', character.personality, true],
     ['背景故事', character.background, true],
     ['能力设定', character.abilities, true],
-    ['弱点', character.weaknesses, true],
   ] as const;
 
   return (

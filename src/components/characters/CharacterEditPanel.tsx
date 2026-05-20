@@ -20,7 +20,6 @@ const emptyForm = {
   personality: '',
   background: '',
   abilities: '',
-  weaknesses: '',
   catchphrase: '',
   occupation: '',
   faction: '',
@@ -47,7 +46,6 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
         personality: existing.personality || '',
         background: existing.background || '',
         abilities: existing.abilities || '',
-        weaknesses: existing.weaknesses || '',
         catchphrase: existing.catchphrase || '',
         occupation: existing.occupation || '',
         faction: existing.faction || '',
@@ -68,7 +66,6 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
     personality: form.personality,
     background: form.background,
     abilities: form.abilities,
-    weaknesses: form.weaknesses,
     catchphrase: form.catchphrase,
     occupation: form.occupation,
     faction: form.faction,
@@ -117,6 +114,7 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
           onChange={(html) => setForm((f) => ({ ...f, [key]: html }))}
           minHeight="120px"
           placeholder={`输入${label}...`}
+          showToolbar={false}
         />
       )}
     </div>
@@ -164,7 +162,6 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
         {field('性格', 'personality', 'richtext')}
         {field('背景故事', 'background', 'richtext')}
         {field('能力设定', 'abilities', 'richtext')}
-        {field('弱点', 'weaknesses', 'richtext')}
       </div>
 
       {/* 图片 */}

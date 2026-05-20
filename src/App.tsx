@@ -340,7 +340,7 @@ function AuthenticatedApp() {
         ) : activeModule === 'characters' && activeWorldId ? (
           <div className="p-6">
             <CharacterList characters={characters} activeId={null}
-                onSelect={(id) => { const c = characters.find(x => x.id === id); if (c) openPreview(c.name, <CharacterPreview character={c} />, [c.appearance,c.personality,c.background,c.abilities,c.weaknesses].join(''), () => openEditDrawer(id)); }}
+                onSelect={(id) => { const c = characters.find(x => x.id === id); if (c) openPreview(c.name, <CharacterPreview character={c} />, [c.appearance,c.personality,c.background,c.abilities].join(''), () => openEditDrawer(id)); }}
                 onCreate={openCreateDrawer} />
           </div>
         ) : activeModule === 'timeline' && activeWorldId ? (

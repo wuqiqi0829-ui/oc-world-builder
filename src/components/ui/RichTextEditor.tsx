@@ -15,10 +15,11 @@ interface Props {
   placeholder?: string;
   minHeight?: string;
   readOnly?: boolean;
+  showToolbar?: boolean;
 }
 
 export default function RichTextEditor({
-  content, onChange, placeholder = '开始输入...', minHeight = '200px', readOnly = false,
+  content, onChange, placeholder = '开始输入...', minHeight = '200px', readOnly = false, showToolbar = true,
 }: Props) {
   const editor = useEditor({
     extensions: [
@@ -79,7 +80,7 @@ export default function RichTextEditor({
       'border border-[rgb(var(--color-border))] rounded-input overflow-hidden',
       'focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent'
     )}>
-      {!readOnly && (
+      {!readOnly && showToolbar && (
         <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex-wrap">
           <ToolBtn active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} title="加粗">
             <Bold size={16} />
