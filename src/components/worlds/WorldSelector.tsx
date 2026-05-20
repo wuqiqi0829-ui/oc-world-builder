@@ -8,9 +8,10 @@ interface Props {
   onNew: () => void;
   onDelete: (id: string) => void;
   onRename: (id: string) => void;
+  onPreview?: (id: string) => void;
 }
 
-export default function WorldSelector({ worlds, onSelect, onNew, onDelete, onRename }: Props) {
+export default function WorldSelector({ worlds, onSelect, onNew, onDelete, onRename, onPreview }: Props) {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -42,7 +43,9 @@ export default function WorldSelector({ worlds, onSelect, onNew, onDelete, onRen
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {worlds.map((world) => (
             <div key={world.id} className="group relative">
-              <Card hover padding="sm" onClick={() => onSelect(world.id)} className="h-full cursor-pointer">
+              <Card hover padding="sm"
+                onClick={() => onPreview ? onPreview(world.id) : onSelect(world.id)}
+                className="h-full cursor-pointer">
                 <div className="aspect-[3/2] rounded-lg bg-[rgb(var(--color-bg))] overflow-hidden mb-3 border border-[rgb(var(--color-border))]">
                   {world.cover_url ? (
                     <img src={world.cover_url} alt={world.name} className="w-full h-full object-cover"
@@ -56,6 +59,12 @@ export default function WorldSelector({ worlds, onSelect, onNew, onDelete, onRen
                 <h3 className="font-semibold text-sm mb-1">{world.name}</h3>
                 {world.description && (
                   <p className="text-xs text-[rgb(var(--color-text-secondary))] line-clamp-2">{world.description}</p>
+                )}
+                {onPreview && (
+                  <button
+                    className="btn-primary text-xs w-full mt-2 !py-1"
+                    onClick={(e) => { e.stopPropagation(); onSelect(world.id); }}
+                  >进入世界观</button>
                 )}
               </Card>
               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">

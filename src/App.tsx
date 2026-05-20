@@ -43,6 +43,7 @@ import OrganizationPreview from '@/components/organizations/OrganizationPreview'
 import ItemPreview from '@/components/items/ItemPreview';
 import EntryPreview from '@/components/categories/EntryPreview';
 import StorylinePreview from '@/components/storylines/StorylinePreview';
+import WorldPreview from '@/components/worlds/WorldPreview';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
   characters: { icon: Users, title: '人物设定库', description: '在这里创建和管理你的OC人设卡' },
@@ -303,6 +304,10 @@ function AuthenticatedApp() {
             onRename={async (id) => {
               const name = prompt('重命名世界观：', worlds.find(w => w.id === id)?.name);
               if (name && name.trim()) await updateWorld(id, { name: name.trim() });
+            }}
+            onPreview={(id) => {
+              const w = worlds.find(x => x.id === id);
+              if (w) openPreview(w.name, <WorldPreview world={w} />, w.description || '', () => { setActiveWorld(id); setShowWorldSelector(false); });
             }}
           />
         ) : activeModule === 'characters' && activeWorldId ? (
