@@ -74,13 +74,6 @@ export default function Sidebar({
       <div className="p-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
         <span className="text-sm font-medium">世界观</span>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => setWorldsCollapsed(!worldsCollapsed)}
-            className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]"
-            title={worldsCollapsed ? '展开世界观' : '折叠世界观'}
-          >
-            <ChevronDown size={14} className={clsx('transition-transform', worldsCollapsed && '-rotate-90')} />
-          </button>
           {onNewWorld && (
             <button onClick={onNewWorld} className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))] text-primary-500" title="新建世界观">
               <Plus size={16} />
@@ -93,14 +86,23 @@ export default function Sidebar({
       </div>
 
       <div className="p-2">
-        {onShowAllWorlds && (
+        <div className="flex items-center gap-1 mb-1">
+          {onShowAllWorlds && (
+            <button
+              onClick={onShowAllWorlds}
+              className="flex items-center gap-2 flex-1 text-xs text-primary-500 font-medium px-2 py-1.5 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20"
+            >
+              <Globe size={14} /> 全部世界观 ({worlds.length})
+            </button>
+          )}
           <button
-            onClick={onShowAllWorlds}
-            className="flex items-center gap-2 w-full text-xs text-primary-500 font-medium px-2 py-1.5 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 mb-1"
+            onClick={() => setWorldsCollapsed(!worldsCollapsed)}
+            className="p-1.5 rounded-btn hover:bg-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] flex-shrink-0"
+            title={worldsCollapsed ? '展开世界观列表' : '折叠世界观列表'}
           >
-            <Globe size={14} /> 全部世界观 ({worlds.length})
+            <ChevronDown size={14} className={clsx('transition-transform', worldsCollapsed && '-rotate-90')} />
           </button>
-        )}
+        </div>
         {worlds.length === 0 && (
           <p className="text-xs text-[rgb(var(--color-text-secondary))] px-2 py-2">
             还没有世界观，点击上方 + 新建
@@ -144,9 +146,6 @@ export default function Sidebar({
               </div>
             ))}
           </div>
-        )}
-        {worldsCollapsed && worlds.length > 0 && (
-          <p className="text-[10px] text-[rgb(var(--color-text-secondary))] px-2 py-1">已折叠 ({worlds.length})</p>
         )}
         </div>
 
