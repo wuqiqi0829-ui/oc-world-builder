@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import {
-
   Globe, Clock, Map, Users, Briefcase, Building2,
   Package, GitBranch, BookOpen, Lightbulb, ChevronLeft,
-  Trash2, Plus
+  Trash2, Plus, ChevronDown
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -42,6 +42,7 @@ export default function Sidebar({
   worlds, activeWorldId, activeModule, onSelectWorld, onDeleteWorld, onSelectModule,
   onNewWorld, onShowAllWorlds, collapsed, onToggleCollapse,
 }: SidebarProps) {
+  const [worldsCollapsed, setWorldsCollapsed] = useState(false);
 
   if (collapsed) {
     return (
@@ -73,6 +74,13 @@ export default function Sidebar({
       <div className="p-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
         <span className="text-sm font-medium">世界观</span>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => setWorldsCollapsed(!worldsCollapsed)}
+            className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]"
+            title={worldsCollapsed ? '展开世界观' : '折叠世界观'}
+          >
+            <ChevronDown size={14} className={clsx('transition-transform', worldsCollapsed && '-rotate-90')} />
+          </button>
           {onNewWorld && (
             <button onClick={onNewWorld} className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))] text-primary-500" title="新建世界观">
               <Plus size={16} />
@@ -93,52 +101,54 @@ export default function Sidebar({
             <Globe size={14} /> 全部世界观 ({worlds.length})
           </button>
         )}
-        <div className="space-y-0.5">
-          {worlds.length === 0 ? (
-            <p className="text-xs text-[rgb(var(--color-text-secondary))] px-2 py-2">
-              还没有世界观，点击上方 + 新建
-            </p>
-          ) : (
-            <div className="space-y-1.5">
-              {worlds.map((w) => (
-                <div
-                  key={w.id}
-                  className={clsx(
-                    'group flex gap-2.5 rounded-card p-2 cursor-pointer transition-all border',
-                    activeWorldId === w.id
-                      ? 'bg-primary-100/60 dark:bg-primary-900/40 border-primary-300 shadow-[0_0_12px_rgba(124,92,191,0.15)]'
-                      : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-border))]/50'
+        {worlds.length === 0 && (
+          <p className="text-xs text-[rgb(var(--color-text-secondary))] px-2 py-2">
+            还没有世界观，点击上方 + 新建
+          </p>
+        )}
+        {!worldsCollapsed && worlds.length > 0 && (
+          <div className="space-y-1.5">
+            {worlds.map((w) => (
+              <div
+                key={w.id}
+                className={clsx(
+                  'group flex gap-2.5 rounded-card p-2 cursor-pointer transition-all border',
+                  activeWorldId === w.id
+                    ? 'bg-primary-100/60 dark:bg-primary-900/40 border-primary-300 shadow-[0_0_12px_rgba(124,92,191,0.15)]'
+                    : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-border))]/50'
+                )}
+                onClick={() => onSelectWorld(w.id)}
+              >
+                <div className="w-14 h-14 rounded-lg bg-[rgb(var(--color-bg))] overflow-hidden flex-shrink-0 border border-[rgb(var(--color-border))]">
+                  {w.cover_url ? (
+                    <img src={w.cover_url} alt={w.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Globe size={18} className="text-[rgb(var(--color-border))]" />
+                    </div>
                   )}
-                  onClick={() => onSelectWorld(w.id)}
-                >
-                  <div className="w-14 h-14 rounded-lg bg-[rgb(var(--color-bg))] overflow-hidden flex-shrink-0 border border-[rgb(var(--color-border))]">
-                    {w.cover_url ? (
-                      <img src={w.cover_url} alt={w.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Globe size={18} className="text-[rgb(var(--color-border))]" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <span className="text-xs font-medium truncate">{w.name}</span>
-                    {w.description && (
-                      <span className="text-[10px] text-[rgb(var(--color-text-secondary))] truncate mt-0.5">{w.description}</span>
-                    )}
-                  </div>
-                  <button
-                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all flex-shrink-0 self-center"
-                    onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
-                    title="删除"
-                  >
-                    <Trash2 size={12} />
-                  </button>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <span className="text-xs font-medium truncate">{w.name}</span>
+                  {w.description && (
+                    <span className="text-[10px] text-[rgb(var(--color-text-secondary))] truncate mt-0.5">{w.description}</span>
+                  )}
+                </div>
+                <button
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all flex-shrink-0 self-center"
+                  onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
+                  title="删除"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {worldsCollapsed && worlds.length > 0 && (
+          <p className="text-[10px] text-[rgb(var(--color-text-secondary))] px-2 py-1">已折叠 ({worlds.length})</p>
+        )}
         </div>
-      </div>
 
       <div className="p-3 border-b border-[rgb(var(--color-border))] mt-1">
         <span className="text-xs font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wider">模块导航</span>
