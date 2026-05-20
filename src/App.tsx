@@ -289,7 +289,7 @@ function AuthenticatedApp() {
         onProfile={() => setProfileOpen(true)}
         drawerContent={
           activeModule === 'characters' && activeWorldId ? (
-            <CharacterEditPanel worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
+            <CharacterEditPanel key={editId || 'new-char'} worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : activeModule === 'timeline' && activeWorldId ? (
             <TimelineEditPanel worldId={activeWorldId} eventId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : activeModule === 'map' && activeWorldId ? (
