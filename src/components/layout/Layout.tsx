@@ -29,6 +29,8 @@ interface LayoutProps {
   onImport?: () => void;
   onShowAllWorlds?: () => void;
   userEmail?: string;
+  userName?: string;
+  userAvatar?: string;
   onLogout?: () => void;
   onProfile?: () => void;
   children: ReactNode;
@@ -39,7 +41,7 @@ export default function Layout({
   worlds, activeWorldId, onSelectWorld, onDeleteWorld,
   activeModule, onSelectModule,
   drawerOpen, drawerTitle, onCloseDrawer, onNewWorld, onNew,
-  onSelectSearchResult, onExport, onImport, onShowAllWorlds, userEmail, onLogout, onProfile, children, drawerContent,
+  onSelectSearchResult, onExport, onImport, onShowAllWorlds, userEmail, userName, userAvatar, onLogout, onProfile, children, drawerContent,
 }: LayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -51,7 +53,7 @@ export default function Layout({
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <TopBar onNew={onNew} onNewWorld={onNewWorld} onSelectSearchResult={onSelectSearchResult} onExport={onExport} onImport={onImport} userEmail={userEmail} onLogout={onLogout} onProfile={onProfile} />
+      <TopBar onNew={onNew} onNewWorld={onNewWorld} onSelectSearchResult={onSelectSearchResult} onExport={onExport} onImport={onImport} userEmail={userEmail} userName={userName} userAvatar={userAvatar} onLogout={onLogout} onProfile={onProfile} />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop sidebar */}

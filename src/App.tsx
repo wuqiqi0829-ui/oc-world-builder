@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useWorlds } from '@/stores/worlds';
@@ -33,6 +33,7 @@ import StorylineList from '@/components/storylines/StorylineList';
 import NotesView from '@/components/notes/NotesView';
 import ItemsView from '@/components/items/ItemsView';
 import type { SearchResult } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import { exportAllData, downloadJson, importAllData } from '@/lib/backup';
 import { Globe, Plus, Users, Clock, Map, Loader2 } from 'lucide-react';
 import PreviewModal from '@/components/ui/PreviewModal';
@@ -111,6 +112,19 @@ function AuthenticatedApp() {
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
   const [showWorldSelector, setShowWorldSelector] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userAvatar, setUserAvatar] = useState('');
+
+  const refreshUser = useCallback(async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      const meta = data.user.user_metadata || {};
+      setUserName((meta.display_name as string) || '');
+      setUserAvatar((meta.avatar_url as string) || '');
+    }
+  }, []);
+
+  useEffect(() => { refreshUser(); }, [refreshUser]);
 
   useEffect(() => {
     fetchWorlds();
@@ -269,6 +283,8 @@ function AuthenticatedApp() {
         onImport={handleImport}
         onShowAllWorlds={() => setShowWorldSelector(true)}
         userEmail={user?.email}
+        userName={userName}
+        userAvatar={userAvatar}
         onLogout={signOut}
         onProfile={() => setProfileOpen(true)}
         drawerContent={
@@ -439,7 +455,7 @@ function AuthenticatedApp() {
 
       <UserProfileModal
         open={profileOpen}
-        onClose={() => setProfileOpen(false)}
+        onClose={() => { setProfileOpen(false); refreshUser(); }}
       />
 
       <NewWorldModal

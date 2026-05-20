@@ -11,11 +11,13 @@ interface TopBarProps {
   onImport?: () => void;
   onSelectSearchResult?: (result: SearchResult) => void;
   userEmail?: string;
+  userName?: string;
+  userAvatar?: string;
   onLogout?: () => void;
   onProfile?: () => void;
 }
 
-export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelectSearchResult, userEmail, onLogout, onProfile }: TopBarProps) {
+export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelectSearchResult, userEmail, userName, userAvatar, onLogout, onProfile }: TopBarProps) {
   const { theme, toggle } = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -98,8 +100,12 @@ export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelect
         {userEmail && (
           <div className="relative group">
             <button className="btn-ghost h-9 px-2 flex items-center gap-1.5 text-xs" title={userEmail}>
-              <User size={14} />
-              <span className="hidden lg:inline max-w-[120px] truncate">{userEmail.split('@')[0]}</span>
+              {userAvatar ? (
+                <img src={userAvatar} alt="" className="w-6 h-6 rounded-full object-cover border border-[rgb(var(--color-border))]" />
+              ) : (
+                <User size={16} />
+              )}
+              <span className="hidden lg:inline max-w-[100px] truncate">{userName || userEmail.split('@')[0]}</span>
             </button>
             <div className="absolute right-0 top-full mt-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-card shadow-lg z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all min-w-[160px]">
               <div className="px-3 py-2 text-xs text-[rgb(var(--color-text-secondary))] border-b border-[rgb(var(--color-border))] truncate">
