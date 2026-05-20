@@ -105,6 +105,7 @@ function AuthenticatedApp() {
   const [previewText, setPreviewText] = useState('');
   const [previewEditAction, setPreviewEditAction] = useState<() => void>(() => {});
   const [newWorldOpen, setNewWorldOpen] = useState(false);
+  const [editWorldData, setEditWorldData] = useState<{ id: string; name: string; description: string; cover_url: string } | null>(null);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
   const [showWorldSelector, setShowWorldSelector] = useState(false);
 
@@ -307,7 +308,9 @@ function AuthenticatedApp() {
             }}
             onPreview={(id) => {
               const w = worlds.find(x => x.id === id);
-              if (w) openPreview(w.name, <WorldPreview world={w} />, w.description || '', () => { setActiveWorld(id); setShowWorldSelector(false); });
+              if (w) openPreview(w.name, <WorldPreview world={w} />, w.description || '', () => {
+                setEditWorldData({ id: w.id, name: w.name, description: w.description, cover_url: w.cover_url || '' });
+              });
             }}
           />
         ) : activeModule === 'characters' && activeWorldId ? (
@@ -423,6 +426,18 @@ function AuthenticatedApp() {
         open={newWorldOpen}
         onClose={() => setNewWorldOpen(false)}
         onSave={handleCreateWorld}
+      />
+
+      <NewWorldModal
+        open={!!editWorldData}
+        onClose={() => setEditWorldData(null)}
+        initialData={editWorldData || undefined}
+        onSave={async (data) => {
+          if (editWorldData) {
+            await updateWorld(editWorldData.id, data);
+            setEditWorldData(null);
+          }
+        }}
       />
 
       <ConfirmDialog

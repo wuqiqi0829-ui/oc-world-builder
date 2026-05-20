@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import { uploadImage } from '@/lib/db';
 import { Loader2, Upload, X } from 'lucide-react';
@@ -7,15 +7,30 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSave: (data: { name: string; description: string; cover_url: string }) => Promise<void>;
+  initialData?: { name: string; description: string; cover_url: string };
 }
 
-export default function NewWorldModal({ open, onClose, onSave }: Props) {
+export default function NewWorldModal({ open, onClose, onSave, initialData }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const isEdit = !!initialData;
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name);
+      setDescription(initialData.description);
+      setCoverUrl(initialData.cover_url);
+    } else {
+      setName('');
+      setDescription('');
+      setCoverUrl('');
+    }
+  }, [initialData, open]);
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,9 +51,6 @@ export default function NewWorldModal({ open, onClose, onSave }: Props) {
     setError('');
     try {
       await onSave({ name: name.trim(), description, cover_url: coverUrl });
-      setName('');
-      setDescription('');
-      setCoverUrl('');
       onClose();
     } catch (err) {
       setError((err as Error).message);
@@ -47,7 +59,7 @@ export default function NewWorldModal({ open, onClose, onSave }: Props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="新建世界观">
+    <Modal open={open} onClose={onClose} title={isEdit ? '编辑世界观' : '新建世界观'}>
       <div className="space-y-4">
         <div>
           <label className="text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1 block">
@@ -112,7 +124,7 @@ export default function NewWorldModal({ open, onClose, onSave }: Props) {
           <button className="btn-ghost text-sm" onClick={onClose} disabled={saving}>取消</button>
           <button className="btn-primary text-sm flex items-center gap-2" onClick={handleSave} disabled={saving || uploading}>
             {saving && <Loader2 size={14} className="animate-spin" />}
-            创建
+            {isEdit ? '保存' : '创建'}
           </button>
         </div>
       </div>
