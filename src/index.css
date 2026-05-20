@@ -55,7 +55,7 @@
 
 @layer utilities {
   .ProseMirror {
-    @apply outline-none min-h-[120px] text-sm leading-relaxed;
+    @apply outline-none min-h-[120px] text-sm leading-relaxed whitespace-pre-wrap;
   }
   .ProseMirror p.is-editor-empty:first-child::before {
     @apply text-[rgb(var(--color-text-secondary))]/50 float-left h-0 pointer-events-none;

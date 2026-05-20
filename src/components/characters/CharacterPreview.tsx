@@ -36,9 +36,9 @@ export default function CharacterPreview({ character }: Props) {
             <div key={label as string}>
               <span className="text-[10px] font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wider">{label as string}</span>
               {rich ? (
-                <div className="text-sm mt-0.5 prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: value as string }} />
+                <div className="text-sm mt-0.5 prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: value as string }} />
               ) : (
-                <p className="text-sm mt-0.5">{value as string}</p>
+                <p className="text-sm mt-0.5 whitespace-pre-wrap">{value as string}</p>
               )}
             </div>
           );
