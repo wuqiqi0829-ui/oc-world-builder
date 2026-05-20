@@ -35,7 +35,7 @@ export default function CharacterPreview({ character }: Props) {
               <img
                 src={img.url}
                 alt={img.label || character.name}
-                className="w-full h-auto object-contain rounded-lg hover:opacity-80 transition-opacity"
+                className="w-full h-40 object-cover rounded-lg hover:opacity-80 transition-opacity"
               />
               {img.label && (
                 <p className="text-[10px] text-[rgb(var(--color-text-secondary))] mt-1 text-center truncate">{img.label}</p>
