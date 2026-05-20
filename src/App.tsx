@@ -107,7 +107,7 @@ function AuthenticatedApp() {
   const [previewContent, setPreviewContent] = useState<ReactNode>(null);
   const [previewText, setPreviewText] = useState('');
   const [previewEditAction, setPreviewEditAction] = useState<() => void>(() => {});
-  const [previewEnterAction, setPreviewEnterAction] = useState<() => void>(() => {});
+  const [previewEnterAction, setPreviewEnterAction] = useState<(() => void) | null>(null);
   const [drawerKey, setDrawerKey] = useState(0);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editModalTitle, setEditModalTitle] = useState('');
@@ -202,7 +202,7 @@ function AuthenticatedApp() {
     setPreviewContent(content);
     setPreviewText(text);
     setPreviewEditAction(() => onEdit);
-    setPreviewEnterAction(() => onEnter || (() => {}));
+    setPreviewEnterAction(onEnter ? () => onEnter : null);
     setPreviewOpen(true);
   };
 
