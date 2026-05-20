@@ -25,18 +25,16 @@ export default function CharacterPreview({ character }: Props) {
   return (
     <div>
       {character.images && character.images.length > 0 && (
-        <div className="flex gap-2 flex-wrap mb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           {character.images.map((img, i) => (
-            <div
-              key={i}
-              className="w-[calc(50%-4px)] sm:w-[calc(33.33%-6px)] cursor-pointer"
-              onClick={() => setLightboxIdx(i)}
-            >
-              <img
-                src={img.url}
-                alt={img.label || character.name}
-                className="w-full h-40 object-cover rounded-lg hover:opacity-80 transition-opacity"
-              />
+            <div key={i} className="cursor-pointer" onClick={() => setLightboxIdx(i)}>
+              <div className="aspect-square rounded-lg overflow-hidden">
+                <img
+                  src={img.url}
+                  alt={img.label || character.name}
+                  className="w-full h-full object-cover hover:opacity-80 transition-opacity"
+                />
+              </div>
               {img.label && (
                 <p className="text-[10px] text-[rgb(var(--color-text-secondary))] mt-1 text-center truncate">{img.label}</p>
               )}
