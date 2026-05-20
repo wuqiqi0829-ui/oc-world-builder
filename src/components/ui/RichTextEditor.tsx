@@ -76,10 +76,13 @@ export default function RichTextEditor({
   );
 
   return (
-    <div className={clsx(
-      'border border-[rgb(var(--color-border))] rounded-input overflow-hidden',
-      'focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent'
-    )}>
+    <div
+      className={clsx(
+        'border border-[rgb(var(--color-border))] rounded-input overflow-hidden cursor-text',
+        'focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent'
+      )}
+      onClick={() => editor.commands.focus()}
+    >
       {!readOnly && showToolbar && (
         <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex-wrap">
           <ToolBtn active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} title="加粗">
