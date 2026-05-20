@@ -25,25 +25,25 @@ export default function CharacterCard({ character, selected, onClick }: Props) {
             </div>
           )}
         </div>
-        <div className="min-w-0 flex-1 flex flex-col justify-center">
+        <div className="min-w-0 flex-1 flex flex-col">
           <h3 className="font-semibold text-base truncate">{character.name}</h3>
           {character.nickname && <p className="text-sm text-[rgb(var(--color-text-secondary))] truncate">「{character.nickname}」</p>}
-        </div>
-        <div className="flex flex-col gap-1 flex-shrink-0">
-          {infoTags.length > 0 && (
-            <div className="flex gap-1">
-              {infoTags.map((t) => (
-                <span key={t} className="text-[10px] bg-[rgb(var(--color-bg))] px-1.5 py-0.5 rounded-full">{t}</span>
-              ))}
-            </div>
-          )}
-          {typeTags.length > 0 && (
-            <div className="flex gap-1">
-              {typeTags.map((t) => (
-                <span key={t} className="text-[10px] bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded-full">{t}</span>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col gap-1.5 mt-auto">
+            {infoTags.length > 0 && (
+              <div className="flex gap-1.5">
+                {infoTags.map((t) => (
+                  <span key={t} className="text-[10px] bg-[rgb(var(--color-bg))] px-1.5 py-0.5 rounded-full">{t}</span>
+                ))}
+              </div>
+            )}
+            {typeTags.length > 0 && (
+              <div className="flex gap-1.5">
+                {typeTags.map((t) => (
+                  <span key={t} className="text-[10px] bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded-full">{t}</span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Card>
