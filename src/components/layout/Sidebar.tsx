@@ -10,6 +10,7 @@ interface World {
   id: string;
   name: string;
   cover_url?: string | null;
+  description?: string;
 }
 
 interface SidebarProps {
@@ -98,35 +99,40 @@ export default function Sidebar({
               还没有世界观，点击上方 + 新建
             </p>
           ) : (
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="space-y-1.5">
               {worlds.map((w) => (
                 <div
                   key={w.id}
                   className={clsx(
-                    'group relative rounded-card cursor-pointer transition-all overflow-hidden border',
+                    'group flex gap-2.5 rounded-card p-2 cursor-pointer transition-all',
                     activeWorldId === w.id
-                      ? 'border-primary-400 ring-1 ring-primary-300'
-                      : 'border-[rgb(var(--color-border))] hover:border-primary-300'
+                      ? 'bg-primary-100/60 dark:bg-primary-900/40 shadow-[0_0_12px_rgba(124,92,191,0.15)]'
+                      : 'hover:bg-[rgb(var(--color-border))]/50'
                   )}
                   onClick={() => onSelectWorld(w.id)}
                 >
-                  <div className="aspect-[4/3] bg-[rgb(var(--color-bg))] flex items-center justify-center overflow-hidden">
+                  <div className="w-14 h-14 rounded-lg bg-[rgb(var(--color-bg))] overflow-hidden flex-shrink-0 border border-[rgb(var(--color-border))]">
                     {w.cover_url ? (
                       <img src={w.cover_url} alt={w.name} className="w-full h-full object-cover" />
                     ) : (
-                      <Globe size={20} className="text-[rgb(var(--color-border))]" />
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Globe size={18} className="text-[rgb(var(--color-border))]" />
+                      </div>
                     )}
                   </div>
-                  <div className="px-2 py-1.5 flex items-center justify-between">
-                    <span className="text-[11px] font-medium truncate">{w.name}</span>
-                    <button
-                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all flex-shrink-0"
-                      onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
-                      title="删除"
-                    >
-                      <Trash2 size={11} />
-                    </button>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <span className="text-xs font-medium truncate">{w.name}</span>
+                    {w.description && (
+                      <span className="text-[10px] text-[rgb(var(--color-text-secondary))] truncate mt-0.5">{w.description}</span>
+                    )}
                   </div>
+                  <button
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all flex-shrink-0 self-center"
+                    onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
+                    title="删除"
+                  >
+                    <Trash2 size={12} />
+                  </button>
                 </div>
               ))}
             </div>
