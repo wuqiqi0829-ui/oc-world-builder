@@ -25,16 +25,23 @@ export default function CharacterPreview({ character }: Props) {
   return (
     <div>
       {character.images && character.images.length > 0 && (
-        <div className="flex gap-3 overflow-x-auto pb-4 mb-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap mb-3">
           {character.images.map((img, i) => (
-            <div key={i} className="flex-shrink-0">
-              <img
-                src={img.url}
-                alt={img.label || character.name}
-                className="max-w-full max-h-64 object-contain rounded-lg border border-[rgb(var(--color-border))] cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => setLightboxIdx(i)}
-              />
-              {img.label && <p className="text-[10px] text-[rgb(var(--color-text-secondary))] mt-1 text-center">{img.label}</p>}
+            <div
+              key={i}
+              className="w-[calc(50%-4px)] sm:w-[calc(33.33%-6px)] bg-[rgb(var(--color-bg))] rounded-lg border border-[rgb(var(--color-border))] overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setLightboxIdx(i)}
+            >
+              <div className="aspect-[4/3] flex items-center justify-center p-1">
+                <img
+                  src={img.url}
+                  alt={img.label || character.name}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+              {img.label && (
+                <p className="text-[10px] text-[rgb(var(--color-text-secondary))] px-2 pb-1.5 text-center truncate">{img.label}</p>
+              )}
             </div>
           ))}
         </div>
