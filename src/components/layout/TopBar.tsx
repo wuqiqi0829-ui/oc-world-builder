@@ -62,8 +62,8 @@ export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelect
 
   return (
     <header className="h-14 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex items-center gap-4 px-4 flex-shrink-0">
-      <h1 className="text-base font-semibold text-primary-600 whitespace-nowrap hidden md:block w-28 flex-shrink-0">
-        OC Builder
+      <h1 className="text-base font-semibold text-primary-600 whitespace-nowrap hidden md:block min-w-[80px] max-w-[160px] truncate flex-shrink-0">
+        {userName ? `${userName}的世界` : 'OC Builder'}
       </h1>
 
       <div className="flex-1 max-w-lg mx-auto relative" ref={containerRef}>
