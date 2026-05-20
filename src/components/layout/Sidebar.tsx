@@ -69,7 +69,7 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="w-60 border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex flex-col flex-shrink-0 overflow-hidden">
+    <aside className="w-60 h-full border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex flex-col flex-shrink-0 overflow-hidden">
       <div className="p-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
         <span className="text-sm font-medium">世界观</span>
         <div className="flex items-center gap-1">

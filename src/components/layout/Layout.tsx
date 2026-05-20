@@ -57,7 +57,7 @@ export default function Layout({
 
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop sidebar */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:block h-full">
           <Sidebar
             worlds={worlds}
             activeWorldId={activeWorldId}
