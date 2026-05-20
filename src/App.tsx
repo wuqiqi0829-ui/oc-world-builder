@@ -18,6 +18,7 @@ import WorldSelector from '@/components/worlds/WorldSelector';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import CharacterList from '@/components/characters/CharacterList';
 import CharacterEditPanel from '@/components/characters/CharacterEditPanel';
+import CharacterDetail from '@/components/characters/CharacterDetail';
 import TimelineView from '@/components/timeline/TimelineView';
 import TimelineEditPanel from '@/components/timeline/TimelineEditPanel';
 import MapView from '@/components/map/MapView';
@@ -27,10 +28,13 @@ import CategoryEditPanel from '@/components/categories/CategoryEditPanel';
 import EntryEditPanel from '@/components/categories/EntryEditPanel';
 import OrganizationView from '@/components/organizations/OrganizationView';
 import OrganizationEditPanel from '@/components/organizations/OrganizationEditPanel';
+import OrganizationDetail from '@/components/organizations/OrganizationDetail';
+import TimelineEventDetail from '@/components/timeline/TimelineEventDetail';
+import StorylineDetail from '@/components/storylines/StorylineDetail';
+import EntryDetail from '@/components/categories/EntryDetail';
 import RelationshipGraph from '@/components/relationships/RelationshipGraph';
 import RelationshipEditPanel from '@/components/relationships/RelationshipEditPanel';
 import StorylineList from '@/components/storylines/StorylineList';
-import StorylineView from '@/components/storylines/StorylineView';
 import NotesView from '@/components/notes/NotesView';
 import ItemsView from '@/components/items/ItemsView';
 import type { SearchResult } from '@/lib/db';
@@ -68,7 +72,7 @@ function AuthenticatedApp() {
     startRealtime: locationsRealtime,
   } = useLocations();
   const {
-    categories, activeCategoryId, fetchCategories,
+    categories, entries, activeCategoryId, fetchCategories,
   } = useCategories();
   const {
     fetch: fetchOrgs, startRealtime: orgsRealtime,
@@ -78,7 +82,7 @@ function AuthenticatedApp() {
     fetch: fetchRels, remove: removeRel,
   } = useRelationships();
   const {
-    storylines, fetch: fetchStorylines, update: updateStoryline,
+    storylines, fetch: fetchStorylines,
   } = useStorylines();
   const {
     fetch: fetchItems,
@@ -90,11 +94,15 @@ function AuthenticatedApp() {
   const [categoryEditId, setCategoryEditId] = useState<string | null>(null);
   const [relSourceType, setRelSourceType] = useState('');
   const [relSourceId, setRelSourceId] = useState('');
-  const [storylineId, setStorylineId] = useState<string | null>(null);
   const [itemEditId, setItemEditId] = useState<string | null>(null);
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
   const [showWorldSelector, setShowWorldSelector] = useState(false);
+  const [previewCharId, setPreviewCharId] = useState<string | null>(null);
+  const [previewOrgId, setPreviewOrgId] = useState<string | null>(null);
+  const [previewEntryId, setPreviewEntryId] = useState<string | null>(null);
+  const [previewEventId, setPreviewEventId] = useState<string | null>(null);
+  const [previewStoryId, setPreviewStoryId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWorlds();
@@ -287,12 +295,32 @@ function AuthenticatedApp() {
             }}
           />
         ) : activeModule === 'characters' && activeWorldId ? (
-          <div className="p-6">
-            <CharacterList characters={characters} activeId={null} onSelect={openEditDrawer} onCreate={openCreateDrawer} />
+          <div className="p-6 flex gap-6 items-start">
+            <div className={previewCharId ? 'w-72 flex-shrink-0' : 'flex-1'}>
+              <CharacterList characters={characters} activeId={previewCharId} onSelect={(id) => setPreviewCharId(id)} onCreate={openCreateDrawer} />
+            </div>
+            {previewCharId && characters.find(c => c.id === previewCharId) && (
+              <div className="flex-1 sticky top-4">
+                <CharacterDetail
+                  character={characters.find(c => c.id === previewCharId)!}
+                  onEdit={() => { setEditId(previewCharId); setDrawerMode('edit'); setDrawerOpen(true); }}
+                  onClose={() => setPreviewCharId(null)}
+                />
+              </div>
+            )}
           </div>
         ) : activeModule === 'timeline' && activeWorldId ? (
-          <div className="p-6">
-            <TimelineView events={events} onCreate={openCreateDrawer} onEdit={openEditDrawer} />
+          <div className="p-6 flex gap-6 items-start">
+            <div className={previewEventId ? 'w-72 flex-shrink-0' : 'flex-1'}>
+              <TimelineView events={events} onCreate={openCreateDrawer} onEdit={(id) => setPreviewEventId(id)} />
+            </div>
+            {previewEventId && events.find(e => e.id === previewEventId) && (
+              <div className="flex-1 sticky top-4">
+                <TimelineEventDetail event={events.find(e => e.id === previewEventId)!}
+                  onEdit={() => { setEditId(previewEventId); setDrawerMode('edit'); setDrawerOpen(true); }}
+                  onClose={() => setPreviewEventId(null)} />
+              </div>
+            )}
           </div>
         ) : activeModule === 'map' && activeWorldId ? (
           <div className="p-4 h-full">
@@ -301,20 +329,43 @@ function AuthenticatedApp() {
             }} onEdit={openEditDrawer} worldId={activeWorldId} />
           </div>
         ) : activeModule === 'categories' && activeWorldId ? (
-          <div className="p-4 h-full">
-            <CategoryView
-              worldId={activeWorldId}
-              onCreateCategory={() => { setCategoryEditId(null); setDrawerMode('category'); setDrawerOpen(true); }}
-              onEditCategory={(id) => { setCategoryEditId(id); setDrawerMode('category'); setDrawerOpen(true); }}
-              onEditEntry={(_catId, entryId) => {
-                setCategoryEditId(null); setEditId(entryId);
-                setDrawerMode(entryId ? 'edit' : 'create'); setDrawerOpen(true);
-              }}
+          <div className="p-4 h-full flex gap-4 items-start">
+            <div className={previewEntryId ? 'w-72 flex-shrink-0' : 'flex-1'}>
+              <CategoryView
+                worldId={activeWorldId}
+                onCreateCategory={() => { setCategoryEditId(null); setDrawerMode('category'); setDrawerOpen(true); }}
+                onEditCategory={(id) => { setCategoryEditId(id); setDrawerMode('category'); setDrawerOpen(true); }}
+                onEditEntry={(_catId, entryId) => {
+                  if (entryId) { setPreviewEntryId(entryId); } else {
+                    setCategoryEditId(null); setEditId(null);
+                    setDrawerMode('create'); setDrawerOpen(true);
+                  }
+                }}
             />
+            </div>
+            {previewEntryId && activeCategoryId && entries[activeCategoryId]?.find(e => e.id === previewEntryId) && (
+              <div className="flex-1 sticky top-4">
+                <EntryDetail
+                  entry={entries[activeCategoryId].find(e => e.id === previewEntryId)!}
+                  category={categories.find(c => c.id === activeCategoryId)}
+                  onEdit={() => { setEditId(previewEntryId); setDrawerMode('edit'); setDrawerOpen(true); }}
+                  onClose={() => setPreviewEntryId(null)} />
+              </div>
+            )}
           </div>
         ) : activeModule === 'organizations' && activeWorldId ? (
-          <div className="p-6">
-            <OrganizationView worldId={activeWorldId} onCreate={openCreateDrawer} onEdit={openEditDrawer} />
+          <div className="p-6 flex gap-6 items-start">
+            <div className={previewOrgId ? 'w-72 flex-shrink-0' : 'flex-1'}>
+              <OrganizationView worldId={activeWorldId} onCreate={openCreateDrawer} onEdit={(id) => setPreviewOrgId(id)} />
+            </div>
+            {previewOrgId && (
+              <div className="flex-1 sticky top-4">
+                <OrganizationDetail
+                  organization={organizations.find(o => o.id === previewOrgId)!}
+                  onEdit={() => { setEditId(previewOrgId); setDrawerMode('edit'); setDrawerOpen(true); }}
+                  onClose={() => setPreviewOrgId(null)} />
+              </div>
+            )}
           </div>
         ) : activeModule === 'relationships' && activeWorldId ? (
           <div className="p-4 h-full">
@@ -328,15 +379,16 @@ function AuthenticatedApp() {
             />
           </div>
         ) : activeModule === 'storylines' && activeWorldId ? (
-          <div className="p-6">
-            <StorylineList worldId={activeWorldId} activeId={storylineId}
-              onSelect={setStorylineId} onCreate={() => { /* handled internally */ }} />
-            {storylineId && (
-              <div className="mt-4">
-                <StorylineView storyline={storylines.find((s) => s.id === storylineId)}
-                  onSaveChapters={async (chapters) => {
-                    if (storylineId) await updateStoryline(storylineId, { chapters } as any);
-                  }} />
+          <div className="p-6 flex gap-6 items-start">
+            <div className={previewStoryId ? 'w-72 flex-shrink-0' : 'flex-1'}>
+              <StorylineList worldId={activeWorldId} activeId={previewStoryId}
+                onSelect={(id) => setPreviewStoryId(id)} onCreate={() => {}} />
+            </div>
+            {previewStoryId && storylines.find(s => s.id === previewStoryId) && (
+              <div className="flex-1 sticky top-4">
+                <StorylineDetail storyline={storylines.find(s => s.id === previewStoryId)!}
+                  onEdit={() => { setEditId(previewStoryId); setDrawerMode('edit'); setDrawerOpen(true); }}
+                  onClose={() => setPreviewStoryId(null)} />
               </div>
             )}
           </div>
