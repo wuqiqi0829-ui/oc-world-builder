@@ -37,6 +37,7 @@ import { supabase } from '@/lib/supabase';
 import { exportAllData, downloadJson, importAllData } from '@/lib/backup';
 import { Globe, Plus, Users, Clock, Map, Loader2 } from 'lucide-react';
 import PreviewModal from '@/components/ui/PreviewModal';
+import EditModal from '@/components/ui/EditModal';
 import CharacterPreview from '@/components/characters/CharacterPreview';
 import TimelineEventPreview from '@/components/timeline/TimelineEventPreview';
 import LocationPreview from '@/components/map/LocationPreview';
@@ -108,6 +109,9 @@ function AuthenticatedApp() {
   const [previewEditAction, setPreviewEditAction] = useState<() => void>(() => {});
   const [previewEnterAction, setPreviewEnterAction] = useState<() => void>(() => {});
   const [drawerKey, setDrawerKey] = useState(0);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editModalTitle, setEditModalTitle] = useState('');
+  const [editModalContent, setEditModalContent] = useState<ReactNode>(null);
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [editWorldData, setEditWorldData] = useState<{ id: string; name: string; description: string; cover_url: string } | null>(null);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
@@ -178,6 +182,13 @@ function AuthenticatedApp() {
     setEditId(id);
     setDrawerKey((k) => k + 1);
     setDrawerOpen(true);
+  };
+
+  const openEditModal = (title: string, content: ReactNode) => {
+    setEditModalTitle(title);
+    setEditModalContent(content);
+    setEditModalOpen(true);
+    setDrawerKey((k) => k + 1);
   };
 
   const closeDrawer = () => {
@@ -291,9 +302,7 @@ function AuthenticatedApp() {
         onLogout={signOut}
         onProfile={() => setProfileOpen(true)}
         drawerContent={
-          activeModule === 'characters' && activeWorldId ? (
-            <CharacterEditPanel key={`char-${drawerKey}`} worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
-          ) : activeModule === 'timeline' && activeWorldId ? (
+          activeModule === 'characters' && activeWorldId ? null : activeModule === 'timeline' && activeWorldId ? (
             <TimelineEditPanel worldId={activeWorldId} eventId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : activeModule === 'map' && activeWorldId ? (
             <LocationEditPanel worldId={activeWorldId} locationId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
@@ -343,8 +352,8 @@ function AuthenticatedApp() {
         ) : activeModule === 'characters' && activeWorldId ? (
           <div className="p-6">
             <CharacterList characters={characters} activeId={null}
-                onSelect={(id) => { const c = characters.find(x => x.id === id); if (c) openPreview(c.name, <CharacterPreview character={c} />, [c.appearance,c.personality,c.background,c.abilities].join(''), () => openEditDrawer(id)); }}
-                onCreate={openCreateDrawer} />
+                onSelect={(id) => { const c = characters.find(x => x.id === id); if (c) openPreview(c.name, <CharacterPreview character={c} />, [c.appearance,c.personality,c.background,c.abilities].join(''), () => openEditModal(c.name, <CharacterEditPanel key={`char-${drawerKey}`} worldId={activeWorldId!} characterId={id} onClose={() => setEditModalOpen(false)} />)); }}
+                onCreate={() => openEditModal('新建角色', <CharacterEditPanel key={`char-new-${drawerKey}`} worldId={activeWorldId!} characterId={null} onClose={() => setEditModalOpen(false)} />)} />
           </div>
         ) : activeModule === 'timeline' && activeWorldId ? (
           <div className="p-6">
@@ -438,6 +447,14 @@ function AuthenticatedApp() {
           </div>
         )}
       </Layout>
+
+      <EditModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title={editModalTitle}
+      >
+        {editModalContent}
+      </EditModal>
 
       <PreviewModal
         open={previewOpen}
