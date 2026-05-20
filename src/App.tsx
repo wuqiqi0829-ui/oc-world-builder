@@ -107,6 +107,7 @@ function AuthenticatedApp() {
   const [previewText, setPreviewText] = useState('');
   const [previewEditAction, setPreviewEditAction] = useState<() => void>(() => {});
   const [previewEnterAction, setPreviewEnterAction] = useState<() => void>(() => {});
+  const [drawerKey, setDrawerKey] = useState(0);
   const [newWorldOpen, setNewWorldOpen] = useState(false);
   const [editWorldData, setEditWorldData] = useState<{ id: string; name: string; description: string; cover_url: string } | null>(null);
   const [deleteWorldId, setDeleteWorldId] = useState<string | null>(null);
@@ -168,12 +169,14 @@ function AuthenticatedApp() {
   const openCreateDrawer = () => {
     setDrawerMode('create');
     setEditId(null);
+    setDrawerKey((k) => k + 1);
     setDrawerOpen(true);
   };
 
   const openEditDrawer = (id: string) => {
     setDrawerMode('edit');
     setEditId(id);
+    setDrawerKey((k) => k + 1);
     setDrawerOpen(true);
   };
 
@@ -289,7 +292,7 @@ function AuthenticatedApp() {
         onProfile={() => setProfileOpen(true)}
         drawerContent={
           activeModule === 'characters' && activeWorldId ? (
-            <CharacterEditPanel key={editId || 'new-char'} worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
+            <CharacterEditPanel key={`char-${drawerKey}`} worldId={activeWorldId} characterId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : activeModule === 'timeline' && activeWorldId ? (
             <TimelineEditPanel worldId={activeWorldId} eventId={drawerMode === 'edit' ? editId : null} onClose={closeDrawer} />
           ) : activeModule === 'map' && activeWorldId ? (
