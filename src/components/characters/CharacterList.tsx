@@ -2,9 +2,8 @@ import { useMemo } from 'react';
 import type { Character } from '@/lib/database';
 import CharacterCard from './CharacterCard';
 import EmptyState from '@/components/ui/EmptyState';
-import { Users, Search } from 'lucide-react';
+import { Users, Search, Plus } from 'lucide-react';
 import { useState } from 'react';
-import clsx from 'clsx';
 
 interface Props {
   characters: Character[];
@@ -15,34 +14,18 @@ interface Props {
 
 export default function CharacterList({ characters, activeId, onSelect, onCreate }: Props) {
   const [search, setSearch] = useState('');
-  const [filterOccupation, setFilterOccupation] = useState('');
-  const [filterFaction, setFilterFaction] = useState('');
-
-  const occupations = useMemo(() => {
-    const set = new Set(characters.map((c) => c.occupation).filter(Boolean));
-    return [...set].sort();
-  }, [characters]);
-
-  const factions = useMemo(() => {
-    const set = new Set(characters.map((c) => c.faction).filter(Boolean));
-    return [...set].sort();
-  }, [characters]);
 
   const filtered = useMemo(() => {
     return characters.filter((c) => {
       if (search && !c.name.includes(search) && !c.nickname?.includes(search)) return false;
-      if (filterOccupation && c.occupation !== filterOccupation) return false;
-      if (filterFaction && c.faction !== filterFaction) return false;
       return true;
     });
-  }, [characters, search, filterOccupation, filterFaction]);
-
-  const hasFilters = occupations.length > 0 || factions.length > 0;
+  }, [characters, search]);
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-secondary))]" />
           <input
             type="text"
@@ -52,40 +35,9 @@ export default function CharacterList({ characters, activeId, onSelect, onCreate
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        {hasFilters && (
-          <>
-            {occupations.length > 0 && (
-              <select
-                className="input text-sm h-9 w-auto"
-                value={filterOccupation}
-                onChange={(e) => setFilterOccupation(e.target.value)}
-              >
-                <option value="">全部职业</option>
-                {occupations.map((o) => (
-                  <option key={o} value={o}>{o}</option>
-                ))}
-              </select>
-            )}
-            {factions.length > 0 && (
-              <select
-                className="input text-sm h-9 w-auto"
-                value={filterFaction}
-                onChange={(e) => setFilterFaction(e.target.value)}
-              >
-                <option value="">全部阵营</option>
-                {factions.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
-            )}
-            <button
-              className={clsx('btn-ghost text-xs', !search && !filterOccupation && !filterFaction && 'hidden')}
-              onClick={() => { setSearch(''); setFilterOccupation(''); setFilterFaction(''); }}
-            >
-              清除筛选
-            </button>
-          </>
-        )}
+        <button className="btn-primary text-sm !px-3 !py-1.5 flex items-center gap-1 flex-shrink-0" onClick={onCreate}>
+          <Plus size={14} /> 新建人物
+        </button>
       </div>
 
       {filtered.length === 0 ? (
