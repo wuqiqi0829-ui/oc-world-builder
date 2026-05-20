@@ -15,7 +15,7 @@ export default function CharacterCard({ character, selected, onClick }: Props) {
   return (
     <Card hover padding="sm" onClick={onClick} className={clsx(selected && 'ring-2 ring-primary-500')}>
       <div className="flex gap-2.5">
-        <div className="w-12 h-12 rounded-lg bg-[rgb(var(--color-bg))] overflow-hidden flex-shrink-0 border border-[rgb(var(--color-border))]">
+        <div className="w-16 h-16 rounded-lg bg-[rgb(var(--color-bg))] overflow-hidden flex-shrink-0 border border-[rgb(var(--color-border))]">
           {avatar ? (
             <img src={avatar} alt={character.name} className="w-full h-full object-cover" />
           ) : (
