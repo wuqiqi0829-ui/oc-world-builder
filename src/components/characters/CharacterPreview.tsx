@@ -29,18 +29,16 @@ export default function CharacterPreview({ character }: Props) {
           {character.images.map((img, i) => (
             <div
               key={i}
-              className="w-[calc(50%-4px)] sm:w-[calc(33.33%-6px)] bg-[rgb(var(--color-bg))] rounded-lg border border-[rgb(var(--color-border))] overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+              className="w-[calc(50%-4px)] sm:w-[calc(33.33%-6px)] cursor-pointer"
               onClick={() => setLightboxIdx(i)}
             >
-              <div className="aspect-[4/3] flex items-center justify-center p-1">
-                <img
-                  src={img.url}
-                  alt={img.label || character.name}
-                  className="max-w-full max-h-full object-contain"
-                />
-              </div>
+              <img
+                src={img.url}
+                alt={img.label || character.name}
+                className="w-full h-auto object-contain rounded-lg hover:opacity-80 transition-opacity"
+              />
               {img.label && (
-                <p className="text-[10px] text-[rgb(var(--color-text-secondary))] px-2 pb-1.5 text-center truncate">{img.label}</p>
+                <p className="text-[10px] text-[rgb(var(--color-text-secondary))] mt-1 text-center truncate">{img.label}</p>
               )}
             </div>
           ))}
