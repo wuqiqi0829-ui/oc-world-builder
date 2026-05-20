@@ -19,6 +19,7 @@ interface TopBarProps {
 
 export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelectSearchResult, userEmail, userName, userAvatar, onLogout, onProfile }: TopBarProps) {
   const { theme, toggle } = useTheme();
+  const [appTitle, setAppTitle] = useState(() => localStorage.getItem('oc-app-title') || 'OC Builder');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,8 +63,18 @@ export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelect
 
   return (
     <header className="h-14 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex items-center gap-4 px-4 flex-shrink-0">
-      <h1 className="text-base font-semibold text-primary-600 whitespace-nowrap hidden md:block min-w-[80px] max-w-[160px] truncate flex-shrink-0">
-        {userName ? `${userName}的世界` : 'OC Builder'}
+      <h1
+        className="text-base font-semibold text-primary-600 whitespace-nowrap hidden md:block min-w-[80px] max-w-[160px] truncate flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+        onClick={() => {
+          const next = prompt('自定义标题名称：', appTitle);
+          if (next && next.trim()) {
+            localStorage.setItem('oc-app-title', next.trim());
+            setAppTitle(next.trim());
+          }
+        }}
+        title="点击修改标题"
+      >
+        {appTitle}
       </h1>
 
       <div className="flex-1 max-w-lg mx-auto relative" ref={containerRef}>
