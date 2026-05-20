@@ -7,12 +7,9 @@ interface Props { character: Character }
 export default function CharacterPreview({ character }: Props) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
+  const basicInfo = [character.nickname ? `「${character.nickname}」` : '', character.gender, character.age, character.occupation, character.faction].filter(Boolean).join(' | ');
+
   const fields = [
-    ['昵称', character.nickname],
-    ['性别', character.gender],
-    ['年龄', character.age],
-    ['职业', character.occupation],
-    ['阵营', character.faction],
     ['口头禅', character.catchphrase],
     ['外貌描述', character.appearance, true],
     ['性格', character.personality, true],
@@ -43,6 +40,12 @@ export default function CharacterPreview({ character }: Props) {
         </div>
       )}
       <div className="space-y-3">
+        {basicInfo && (
+          <div>
+            <span className="text-[10px] font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wider">基础信息</span>
+            <p className="text-sm mt-0.5">{basicInfo}</p>
+          </div>
+        )}
         {fields.map(([label, value, rich]) => {
           if (!value) return null;
           return (
