@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { Clock, Map, Users, Briefcase, Menu } from 'lucide-react';
+import { Clock, Map, Users, BookOpen, Menu } from 'lucide-react';
 
 interface MobileNavProps {
   activeModule: string;
@@ -8,10 +8,10 @@ interface MobileNavProps {
 }
 
 const tabs = [
-  { id: 'timeline', label: '时间线', icon: Clock },
-  { id: 'map', label: '地图', icon: Map },
   { id: 'characters', label: '人物', icon: Users },
-  { id: 'categories', label: '设定', icon: Briefcase },
+  { id: 'map', label: '地图', icon: Map },
+  { id: 'timeline', label: '时间线', icon: Clock },
+  { id: 'storylines', label: '剧情', icon: BookOpen },
 ];
 
 export default function MobileNav({ activeModule, onSelectModule, onOpenSidebar }: MobileNavProps) {

@@ -25,14 +25,14 @@ interface SidebarProps {
 }
 
 const modules = [
-  { id: 'timeline', label: '时间线', icon: Clock },
-  { id: 'map', label: '地图', icon: Map },
   { id: 'characters', label: '人物', icon: Users },
+  { id: 'map', label: '地图', icon: Map },
+  { id: 'timeline', label: '时间线', icon: Clock },
+  { id: 'storylines', label: '主线剧情', icon: BookOpen },
   { id: 'categories', label: '职业/种族', icon: Briefcase },
   { id: 'organizations', label: '组织势力', icon: Building2 },
-  { id: 'items', label: '物品图鉴', icon: Package },
   { id: 'relationships', label: '关系图谱', icon: GitBranch },
-  { id: 'storylines', label: '主线剧情', icon: BookOpen },
+  { id: 'items', label: '物品图鉴', icon: Package },
   { id: 'notes', label: '灵感速记', icon: Lightbulb },
 ];
 
