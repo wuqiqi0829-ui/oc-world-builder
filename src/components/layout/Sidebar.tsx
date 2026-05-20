@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import {
+
   Globe, Clock, Map, Users, Briefcase, Building2,
   Package, GitBranch, BookOpen, Lightbulb, ChevronLeft,
-  ChevronDown, Trash2, Plus
+  Trash2, Plus
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -40,7 +40,6 @@ export default function Sidebar({
   worlds, activeWorldId, activeModule, onSelectWorld, onDeleteWorld, onSelectModule,
   onNewWorld, onShowAllWorlds, collapsed, onToggleCollapse,
 }: SidebarProps) {
-  const [worldsExpanded, setWorldsExpanded] = useState(true);
 
   if (collapsed) {
     return (
@@ -92,45 +91,36 @@ export default function Sidebar({
             <Globe size={14} /> 全部世界观 ({worlds.length})
           </button>
         )}
-        <button
-          onClick={() => setWorldsExpanded(!worldsExpanded)}
-          className="flex items-center gap-1 w-full text-xs text-[rgb(var(--color-text-secondary))] px-2 py-1 rounded hover:bg-[rgb(var(--color-border))]"
-        >
-          <ChevronDown size={12} className={clsx('transition-transform', worldsExpanded || '-rotate-90')} />
-          当前世界观
-        </button>
-        {worldsExpanded && (
-          <div className="mt-1 space-y-0.5">
-            {worlds.length === 0 ? (
-              <p className="text-xs text-[rgb(var(--color-text-secondary))] px-2 py-2">
-                还没有世界观，点击上方 + 新建
-              </p>
-            ) : (
-              worlds.map((w) => (
-                <div
-                  key={w.id}
-                  className={clsx(
-                    'group flex items-center gap-2 px-2 py-1.5 rounded-btn cursor-pointer text-sm transition-colors',
-                    activeWorldId === w.id
-                      ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
-                      : 'hover:bg-[rgb(var(--color-border))]'
-                  )}
-                  onClick={() => onSelectWorld(w.id)}
+        <div className="space-y-0.5">
+          {worlds.length === 0 ? (
+            <p className="text-xs text-[rgb(var(--color-text-secondary))] px-2 py-2">
+              还没有世界观，点击上方 + 新建
+            </p>
+          ) : (
+            worlds.map((w) => (
+              <div
+                key={w.id}
+                className={clsx(
+                  'group flex items-center gap-2 px-2 py-1.5 rounded-btn cursor-pointer text-sm transition-colors',
+                  activeWorldId === w.id
+                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                    : 'hover:bg-[rgb(var(--color-border))]'
+                )}
+                onClick={() => onSelectWorld(w.id)}
+              >
+                <Globe size={14} className="flex-shrink-0" />
+                <span className="truncate flex-1">{w.name}</span>
+                <button
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all"
+                  onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
+                  title="删除"
                 >
-                  <Globe size={14} className="flex-shrink-0" />
-                  <span className="truncate flex-1">{w.name}</span>
-                  <button
-                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all"
-                    onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
-                    title="删除"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       <div className="p-3 border-b border-[rgb(var(--color-border))] mt-1">
