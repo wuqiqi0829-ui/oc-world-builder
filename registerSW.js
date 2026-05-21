@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/oc-world-builder/sw.js', { scope: '/oc-world-builder/' })})}
