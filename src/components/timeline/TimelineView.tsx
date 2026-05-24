@@ -8,73 +8,105 @@ import { CSS } from '@dnd-kit/utilities';
 import type { TimelineEvent } from '@/lib/database';
 import { useTimeline } from '@/stores/timeline';
 import EmptyState from '@/components/ui/EmptyState';
-import { Clock, GripVertical, ChevronDown, ChevronUp, ArrowUpDown, ImageIcon } from 'lucide-react';
+import { Clock, GripVertical, ArrowUpDown, EyeOff, Plus, ArrowLeftRight } from 'lucide-react';
 import clsx from 'clsx';
 
-function TimelineNode({ event, index, onPreview, onEdit }: {
-  event: TimelineEvent; index: number; onPreview?: (id: string) => void; onEdit?: (id: string) => void;
-}) {
-  const { update } = useTimeline();
-  const isLeft = index % 2 === 0;
-  const hasImage = event.images && event.images.length > 0;
+function getBrief(desc: string): string {
+  const idx = desc.indexOf('<!--brief-->');
+  if (idx >= 0) return desc.slice(0, idx);
+  return desc.replace(/<[^>]*>/g, '').slice(0, 80);
+}
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: event.id,
-  });
+function TimelineCard({ event, onPreview, onEdit, isLeft, showHandle, dragProps, onFlip }: {
+  event: TimelineEvent;
+  onPreview?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  isLeft: boolean;
+  showHandle: boolean;
+  dragProps: { attributes: any; listeners: any };
+  onFlip: () => void;
+}) {
+  const brief = getBrief(event.description || '');
+
+  return (
+    <div className="relative group/card">
+      {showHandle && (
+        <button
+          {...dragProps.attributes}
+          {...dragProps.listeners}
+          className={clsx('absolute top-1/2 -translate-y-1/2 z-10 cursor-grab active:cursor-grabbing text-gray-400 hover:text-primary-500 transition-colors', isLeft ? '-right-7' : '-left-7')}
+        >
+          <GripVertical size={14} />
+        </button>
+      )}
+      <div
+        className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer p-4"
+        onClick={() => (onPreview || onEdit)?.(event.id)}
+      >
+        <div className="text-center">
+          <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100">{event.title}</h3>
+          {brief && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed whitespace-pre-wrap line-clamp-2">{brief}</p>
+          )}
+        </div>
+      </div>
+      <button
+        className="absolute top-2 right-2 p-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-400 hover:text-primary-500 opacity-0 group-hover/card:opacity-100 transition-opacity"
+        onClick={(e) => { e.stopPropagation(); onFlip(); }}
+        title="切换左右"
+      >
+        <ArrowLeftRight size={12} />
+      </button>
+    </div>
+  );
+}
+
+function TimelineNode({ event, onPreview, onEdit, showHandle, onFlip, onCreateSubTimeline }: {
+  event: TimelineEvent; onPreview?: (id: string) => void; onEdit?: (id: string) => void;
+  showHandle: boolean; onFlip: () => void; onCreateSubTimeline?: (timeLabel: string) => void;
+}) {
+  const isLeft = !event.collapsed;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: event.id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 1 };
 
   return (
-    <div ref={setNodeRef} style={style} className={clsx('relative flex items-start gap-2 group', isDragging && 'opacity-50')}>
-      {/* Drag handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="mt-4 cursor-grab active:cursor-grabbing text-[rgb(var(--color-text-secondary))] opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-      >
-        <GripVertical size={16} />
-      </button>
+    <div ref={setNodeRef} style={style} className={clsx('relative', isDragging && 'opacity-50')}>
+      {/* Desktop: alternating double-column */}
+      <div className="hidden lg:grid grid-cols-[1fr_auto_1fr] items-start relative min-h-[80px]">
+        {/* Left side */}
+        <div className="flex justify-end pr-12">
+          {isLeft && <TimelineCard event={event} onPreview={onPreview} onEdit={onEdit} isLeft={true} showHandle={showHandle} dragProps={{ attributes, listeners }} onFlip={onFlip} />}
+        </div>
 
-      {/* Content card */}
-      <div className="flex-1">
-        {/* Mobile: time label above card */}
-        <div className="lg:hidden text-xs font-mono text-primary-500 mb-1 ml-1">{event.time_label || '未标注时间'}</div>
-
-        <div
-          className={clsx(
-            'card cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all duration-150',
-            event.collapsed ? 'py-2' : ''
+        {/* Center dot + label */}
+        <div className="flex flex-col items-center z-10" style={{ paddingTop: 12 }}>
+          <button
+            className="w-5 h-5 rounded-full bg-primary-300 hover:bg-primary-400 border-2 border-white dark:border-gray-800 shadow-sm cursor-pointer hover:scale-125 transition-all"
+            onClick={() => onCreateSubTimeline?.(event.time_label || event.title)}
+            title="创建子时间轴"
+          />
+          {event.time_label && (
+            <span className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 whitespace-nowrap font-mono text-center">{event.time_label}</span>
           )}
-          onClick={() => (onPreview || onEdit)?.(event.id)}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium text-sm truncate">{event.title}</h3>
-                {hasImage && <ImageIcon size={12} className="text-[rgb(var(--color-text-secondary))] flex-shrink-0" />}
-              </div>
-              {!event.collapsed && event.description && (
-                <div
-                  className="text-xs text-[rgb(var(--color-text-secondary))] mt-1.5 line-clamp-3"
-                  dangerouslySetInnerHTML={{ __html: event.description.replace(/<[^>]*>/g, '').slice(0, 200) }}
-                />
-              )}
-            </div>
-            <button
-              className="p-0.5 rounded hover:bg-[rgb(var(--color-border))] flex-shrink-0"
-              onClick={(e) => { e.stopPropagation(); update(event.id, { collapsed: !event.collapsed } as Partial<TimelineEvent>); }}
-            >
-              {event.collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-            </button>
-          </div>
+        </div>
+
+        {/* Right side */}
+        <div className="flex pl-12">
+          {!isLeft && <TimelineCard event={event} onPreview={onPreview} onEdit={onEdit} isLeft={false} showHandle={showHandle} dragProps={{ attributes, listeners }} onFlip={onFlip} />}
         </div>
       </div>
 
-      {/* Desktop: time label on alternating sides */}
-      <div className={clsx(
-        'hidden lg:block w-28 flex-shrink-0 text-xs font-mono text-primary-500 pt-4',
-        isLeft ? 'text-right order-first' : 'text-left'
-      )}>
-        {event.time_label || '未标注时间'}
+      {/* Mobile: single column */}
+      <div className="lg:hidden flex items-start gap-1 pl-6 relative">
+        <div className="absolute left-0 top-4 flex flex-col items-center">
+          <div className="w-2.5 h-2.5 rounded-full bg-primary-300 border-2 border-white dark:border-gray-800 shadow-sm" />
+        </div>
+        <div className="flex-1 ml-3">
+          {event.time_label && (
+            <div className="text-[11px] text-primary-500 font-mono mb-1">{event.time_label}</div>
+          )}
+          <TimelineCard event={event} onPreview={onPreview} onEdit={onEdit} isLeft={false} showHandle={showHandle} dragProps={{ attributes, listeners }} onFlip={onFlip} />
+        </div>
       </div>
     </div>
   );
@@ -82,19 +114,20 @@ function TimelineNode({ event, index, onPreview, onEdit }: {
 
 interface Props {
   events: TimelineEvent[];
-  onCreate: () => void;
+  onCreate?: () => void;
+  onCreateSubTimeline?: (timeLabel: string) => void;
   onEdit: (id: string) => void;
   onPreview?: (id: string) => void;
+  title?: string;
 }
 
-export default function TimelineView({ events, onCreate, onEdit, onPreview }: Props) {
-  const { sortOrder, setSortOrder, reorder } = useTimeline();
-  const [showCollapsed, setShowCollapsed] = useState(true);
+export default function TimelineView({ events, onCreate, onCreateSubTimeline, onEdit, onPreview, title }: Props) {
+  const { sortOrder, setSortOrder, reorder, update } = useTimeline();
+  const [showHandle, setShowHandle] = useState(false);
 
   const sorted = useMemo(() => {
-    const visible = showCollapsed ? events : events.filter((e) => !e.collapsed);
-    return sortOrder === 'asc' ? visible : [...visible].reverse();
-  }, [events, sortOrder, showCollapsed]);
+    return sortOrder === 'asc' ? events : [...events].reverse();
+  }, [events, sortOrder]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -110,8 +143,8 @@ export default function TimelineView({ events, onCreate, onEdit, onPreview }: Pr
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
+    <div className="space-y-4 pb-16">
+      <div className="flex items-center gap-2 relative">
         <button
           className={clsx('btn-ghost text-xs flex items-center gap-1', '!px-2 !py-1')}
           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -119,13 +152,18 @@ export default function TimelineView({ events, onCreate, onEdit, onPreview }: Pr
           <ArrowUpDown size={14} />
           {sortOrder === 'asc' ? '时间正序' : '时间倒序'}
         </button>
-        <button
-          className={clsx('btn-ghost text-xs !px-2 !py-1', !showCollapsed && 'text-primary-500')}
-          onClick={() => setShowCollapsed(!showCollapsed)}
-        >
-          {showCollapsed ? '隐藏折叠' : '显示全部'}
+        <button className="btn-ghost text-xs !px-2 !py-1 flex items-center gap-1" onClick={() => setShowHandle(!showHandle)} title={showHandle ? '隐藏拖拽' : '显示拖拽'}>
+          <EyeOff size={14} className={showHandle ? '' : 'text-primary-500'} />
         </button>
+        {title && (
+          <span className="absolute left-1/2 -translate-x-1/2 text-base font-semibold text-primary-600 dark:text-primary-400">{title}</span>
+        )}
         <div className="flex-1" />
+        {onCreate && (
+          <button className="btn-primary text-xs flex items-center gap-1" onClick={onCreate}>
+            <Plus size={12} /> 新建事件
+          </button>
+        )}
       </div>
 
       {sorted.length === 0 ? (
@@ -133,18 +171,23 @@ export default function TimelineView({ events, onCreate, onEdit, onPreview }: Pr
           icon={<Clock size={48} />}
           title="还没有时间节点"
           description="添加第一个历史事件，构建世界观时间轴"
-          action={<button className="btn-primary text-sm" onClick={onCreate}>新建事件</button>}
+          action={onCreate ? <button className="btn-primary text-sm" onClick={onCreate}>新建事件</button> : undefined}
         />
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sorted.map((e) => e.id)} strategy={verticalListSortingStrategy}>
             <div className="relative">
-              {/* Timeline center line (desktop) */}
-              <div className="hidden lg:block absolute left-8 right-8 top-0 bottom-0 w-0.5 bg-[rgb(var(--color-border))] mx-auto" />
+              {/* Center vertical line - desktop */}
+              <div className="hidden lg:block absolute left-1/2 top-4 bottom-4 w-px bg-gray-300 dark:bg-gray-600 -translate-x-1/2" />
+              {/* Left vertical line - mobile */}
+              <div className="lg:hidden absolute left-[7px] top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-700" />
 
-              <div className="space-y-1">
-                {sorted.map((event, index) => (
-                  <TimelineNode key={event.id} event={event} index={index} onPreview={onPreview} onEdit={onEdit} />
+              <div className="space-y-6 lg:space-y-8">
+                {sorted.map((event) => (
+                  <TimelineNode key={event.id} event={event}
+                    onPreview={onPreview} onEdit={onEdit} showHandle={showHandle}
+                    onCreateSubTimeline={onCreateSubTimeline}
+                    onFlip={() => update(event.id, { collapsed: !event.collapsed } as Partial<TimelineEvent>)} />
                 ))}
               </div>
             </div>

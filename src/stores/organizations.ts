@@ -10,10 +10,11 @@ interface OrgsState {
   create: (data: Partial<Organization> & { world_id: string; name: string }) => Promise<Organization>;
   update: (id: string, changes: Partial<Organization>) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  reorder: (ids: string[]) => void;
   startRealtime: (worldId: string) => RealtimeChannel;
 }
 
-export const useOrganizations = create<OrgsState>((set) => ({
+export const useOrganizations = create<OrgsState>((set, get) => ({
   organizations: [],
   loading: false,
 
@@ -39,6 +40,13 @@ export const useOrganizations = create<OrgsState>((set) => ({
   remove: async (id) => {
     await organizationsApi.delete(id);
     set((s) => ({ organizations: s.organizations.filter((o) => o.id !== id) }));
+  },
+
+  reorder: (ids) => {
+    const current = get().organizations;
+    const reordered = ids.map((id) => current.find((o) => o.id === id)!).filter(Boolean);
+    set({ organizations: reordered });
+    ids.forEach((id, i) => { organizationsApi.update(id, { sort_order: i } as Record<string, unknown>).catch(() => {}); });
   },
 
   startRealtime: (worldId) => {

@@ -1,19 +1,19 @@
-import { useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import ReactFlow, {
-  Background, Controls, MiniMap, useNodesState, useEdgesState,
-  type Node, type Edge, MarkerType,
+  Controls, MiniMap, useNodesState, useEdgesState,
+  type Node, type Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useRelationships } from '@/stores/relationships';
-import type { Character, Organization, Location } from '@/lib/database';
-import EmptyState from '@/components/ui/EmptyState';
-import { GitBranch } from 'lucide-react';
+import type { Character, Relationship } from '@/lib/database';
+import { parseLabel } from '@/lib/labelUtils';
+import { Plus, X } from 'lucide-react';
+import CharacterNode from './CharacterNode';
+import ParallelEdge from './ParallelEdge';
+import RelationshipList from './RelationshipList';
 
-const nodeColors: Record<string, string> = {
-  character: '#7C5CBF',
-  organization: '#E85D75',
-  location: '#4CAF50',
-};
+const nodeTypes = { character: CharacterNode };
+const edgeTypes = { parallel: ParallelEdge };
 
 const relationLabels: Record<string, string> = {
   friend: '亲友', enemy: '敌对', mentor: '师徒', lover: '恋人',
@@ -23,129 +23,332 @@ const relationLabels: Record<string, string> = {
 interface Props {
   worldId: string;
   characters: Character[];
-  organizations: Organization[];
-  locations: Location[];
-  onCreate: (sourceType: string, sourceId: string) => void;
+  onCreateNew: (sourceId: string, targetId: string) => void;
+  onPreview?: (rel: Relationship) => void;
+  onEdit: (rel: Relationship) => void;
   onDeleteRelation: (id: string) => void;
 }
 
-export default function RelationshipGraph({ worldId: _worldId, characters, organizations, locations, onCreate, onDeleteRelation }: Props) {
-  const { relationships } = useRelationships();
+const POS_KEY = 'oco-graph-positions';
 
-  const entityMap = useMemo(() => {
-    const map: Record<string, { name: string; type: string }> = {};
-    characters.forEach((c) => { map[c.id] = { name: c.name, type: 'character' }; });
-    organizations.forEach((o) => { map[o.id] = { name: o.name, type: 'organization' }; });
-    locations.forEach((l) => { map[l.id] = { name: l.name, type: 'location' }; });
+function loadPositions(worldId: string): Record<string, { x: number; y: number }> {
+  try {
+    const raw = localStorage.getItem(`${POS_KEY}-${worldId}`);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function savePositions(worldId: string, pos: Record<string, { x: number; y: number }>) {
+  try { localStorage.setItem(`${POS_KEY}-${worldId}`, JSON.stringify(pos)); } catch {}
+}
+
+export default function RelationshipGraph({ worldId, characters, onCreateNew, onPreview, onEdit, onDeleteRelation }: Props) {
+  const { relationships } = useRelationships();
+  const [importOpen, setImportOpen] = useState(false);
+  const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
+  const connectingRef = useRef<string | null>(null);
+  useEffect(() => { connectingRef.current = connectingFrom; }, [connectingFrom]);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const graphRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef({ x: 0, y: 0, zoom: 1 });
+  const savedPositions = useMemo(() => loadPositions(worldId), [worldId]);
+
+  const characterMap = useMemo(() => {
+    const map: Record<string, Character> = {};
+    characters.forEach((c) => { map[c.id] = c; });
     return map;
-  }, [characters, organizations, locations]);
+  }, [characters]);
+
+  const characterNames = useMemo(() => {
+    const map: Record<string, string> = {};
+    characters.forEach((c) => { map[c.id] = c.name; });
+    return map;
+  }, [characters]);
+
+  // 哪些人物已有关系
+  const linkedCharIds = useMemo(() => {
+    const set = new Set<string>();
+    relationships.forEach((r) => {
+      if (r.source_type === 'character') set.add(r.source_id);
+      if (r.target_type === 'character') set.add(r.target_id);
+    });
+    return set;
+  }, [relationships]);
+
+  // 手动导入的人物（用数组确保 React 检测变化）
+  const [importedIds, setImportedIds] = useState<string[]>([]);
+
+  // 已有关系的人物也自动标记为已导入，删线不会丢人物
+  useEffect(() => {
+    setImportedIds((prev) => {
+      const cur = new Set(prev);
+      let changed = false;
+      linkedCharIds.forEach((id) => {
+        if (!cur.has(id)) { cur.add(id); changed = true; }
+      });
+      return changed ? [...cur] : prev;
+    });
+  }, [linkedCharIds]);
+
+  const allNodeIds = useMemo(() => {
+    const set = new Set(linkedCharIds);
+    importedIds.forEach((id) => set.add(id));
+    return set;
+  }, [linkedCharIds, importedIds]);
 
   const { initialNodes, initialEdges } = useMemo(() => {
-    const addedNodes = new Set<string>();
     const nodes: Node[] = [];
     const edges: Edge[] = [];
+    const pairMap = new Map<string, Relationship[]>();
 
-    // Add participating entities as nodes
     for (const rel of relationships) {
-      for (const [entityId, entityType] of [[rel.source_id, rel.source_type], [rel.target_id, rel.target_type]]) {
-        if (!addedNodes.has(entityId as string) && entityMap[entityId as string]) {
-          const info = entityMap[entityId as string];
-          addedNodes.add(entityId as string);
-          nodes.push({
-            id: entityId as string,
-            type: 'default',
-            position: { x: Math.random() * 400 + 50, y: Math.random() * 300 + 50 },
-            data: {
-              label: (
-                <div className="px-3 py-2 rounded-card border-2 shadow-sm text-xs font-medium"
-                  style={{ borderColor: nodeColors[entityType as string] || '#999', backgroundColor: 'rgb(var(--color-surface))' }}>
-                  <div style={{ color: nodeColors[entityType as string] || '#999', fontSize: '9px' }}>
-                    {{ character: '人物', organization: '组织', location: '地点' }[entityType as string]}
-                  </div>
-                  {info.name}
-                </div>
-              ),
-            },
-            style: { background: 'transparent', border: 'none' },
-          });
-        }
-      }
+      if (rel.source_type !== 'character' || rel.target_type !== 'character') continue;
+      if (!characterMap[rel.source_id] || !characterMap[rel.target_id]) continue;
+      const key = [rel.source_id, rel.target_id].sort().join('::');
+      if (!pairMap.has(key)) pairMap.set(key, []);
+      pairMap.get(key)!.push(rel);
+    }
 
-      // Add edge
-      if (entityMap[rel.source_id] && entityMap[rel.target_id]) {
+    // 创建节点，优先用保存的位置，否则网格布局
+    const sortedIds = [...allNodeIds].sort();
+    const cols = 5;
+    sortedIds.forEach((id, i) => {
+      if (characterMap[id]) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const saved = savedPositions[id];
+        nodes.push({
+          id,
+          type: 'character',
+          position: saved || { x: 100 + col * 160, y: 80 + row * 140 },
+          data: { character: characterMap[id], color: '#7C5CBF' },
+        });
+      }
+    });
+
+    // 创建连线
+    for (const [key, rels] of pairMap) {
+      const [id1, id2] = key.split('::');
+      const forward = rels.find((r) => r.source_id === id1 && r.target_id === id2);
+      const backward = rels.find((r) => r.source_id === id2 && r.target_id === id1);
+
+      if (forward || backward) {
+        const edgeSource = forward ? id1 : id2;
+        const edgeTarget = forward ? id2 : id1;
+        // 正向：总是取 forward（如果有），否则取 backward 的数据
+        const primary = forward || backward;
+        const secondary = forward && backward ? backward : undefined;
+        const primaryParsed = parseLabel(primary!.label);
+        const secondaryParsed = secondary ? parseLabel(secondary.label) : { color: '#999', opinion: '', details: '' };
+        const primaryType = relationLabels[primary!.relation_type] || primary!.relation_type;
+        const secondaryType = secondary ? (relationLabels[secondary.relation_type] || secondary.relation_type) : '';
+
         edges.push({
-          id: rel.id,
-          source: rel.source_id,
-          target: rel.target_id,
-          label: relationLabels[rel.relation_type] || rel.relation_type || '关联',
-          animated: false,
-          style: { stroke: nodeColors[rel.source_type] || '#999', strokeWidth: 1.5 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: nodeColors[rel.source_type] || '#999' },
-          labelStyle: { fontSize: 10, fill: 'rgb(var(--color-text-secondary))' },
-          labelBgStyle: { fill: 'rgb(var(--color-surface))', fillOpacity: 0.9 },
+          id: `${id1}::${id2}`,
+          source: edgeSource,
+          target: edgeTarget,
+          type: 'parallel',
+          data: {
+            forwardLabel: primaryType ? (primaryParsed.opinion ? `${primaryType} ${primaryParsed.opinion}` : primaryType) : '',
+            forwardColor: primaryParsed.color || '#7C5CBF',
+            backwardLabel: secondary ? (secondaryType ? (secondaryParsed.opinion ? `${secondaryType} ${secondaryParsed.opinion}` : secondaryType) : '') : undefined,
+            backwardColor: secondary ? (secondaryParsed.color || '#7C5CBF') : undefined,
+            forwardRel: forward,
+            backwardRel: backward,
+          },
         });
       }
     }
 
     return { initialNodes: nodes, initialEdges: edges };
-  }, [relationships, entityMap]);
+  }, [relationships, characterMap, allNodeIds]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+  // 持久化节点位置到 localStorage
   useEffect(() => {
-    setNodes(initialNodes);
+    if (nodes.length > 0) {
+      const pos: Record<string, { x: number; y: number }> = {};
+      nodes.forEach((n) => { pos[n.id] = n.position; });
+      savePositions(worldId, pos);
+    }
+  }, [nodes, worldId]);
+
+  // 只新增节点（保留已有位置），不重置拖拽后的位置
+  useEffect(() => {
+    setNodes((prev) => {
+      const prevMap = new Map(prev.map((n) => [n.id, n]));
+      const updated = initialNodes.map((n) => {
+        const existing = prevMap.get(n.id);
+        return existing
+          ? { ...n, position: existing.position } // 保留拖拽位置
+          : n;
+      });
+      return updated;
+    });
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
-  const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
-    event.preventDefault();
-    const entityType = entityMap[node.id]?.type;
-    if (entityType) onCreate(entityType, node.id);
-  }, [entityMap, onCreate]);
+  // 点击节点：开始连线或完成连线（用 ref 避免闭包过期）
+  const handleNodeClickDirect = useCallback((nodeId: string) => {
+    const from = connectingRef.current;
+    if (from) {
+      if (nodeId !== from) {
+        setImportedIds((prev) => [...new Set([...prev, from, nodeId])]);
+        onCreateNew(from, nodeId);
+      }
+      setConnectingFrom(null);
+      setMousePos(null);
+    } else {
+      setConnectingFrom(nodeId);
+    }
+  }, [onCreateNew]);
 
-  const onEdgeContextMenu = useCallback((event: React.MouseEvent, edge: Edge) => {
-    event.preventDefault();
-    if (confirm('删除这条关系？')) onDeleteRelation(edge.id);
-  }, [onDeleteRelation]);
+  // 鼠标跟随（屏幕坐标，用于临时虚线 SVG）
+  const handleMouseMove = useCallback((event: React.MouseEvent) => {
+    if (!connectingRef.current || !graphRef.current) return;
+    const rect = graphRef.current.getBoundingClientRect();
+    setMousePos({
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+  }, [connectingFrom]);
 
-  if (relationships.length === 0) {
-    return (
-      <EmptyState
-        icon={<GitBranch size={48} />}
-        title="还没有关系连线"
-        description="右键点击图谱中的节点添加关系，或通过人物/组织详情页添加关联"
-      />
-    );
-  }
+  // 取消连线
+  const handlePaneClick = useCallback(() => {
+    if (connectingRef.current) {
+      setConnectingFrom(null);
+      setMousePos(null);
+    }
+  }, []);
+
+  // 点击连线 → 预览
+  const handleEdgeClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
+    const data = edge.data as any;
+    const rel = data?.forwardRel || data?.backwardRel;
+    if (rel && onPreview) onPreview(rel);
+  }, [onPreview]);
+
+  // 获取连线源节点的屏幕位置
+  const connectingNode = connectingFrom ? nodes.find((n) => n.id === connectingFrom) : null;
+
+  const charList = characters.filter((c) => !allNodeIds.has(c.id));
 
   return (
-    <div className="h-[500px] rounded-card border border-[rgb(var(--color-border))] overflow-hidden">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeContextMenu={onNodeContextMenu}
-        onEdgeContextMenu={onEdgeContextMenu}
-        fitView
-        attributionPosition="bottom-left"
-        minZoom={0.2}
-        maxZoom={2}
-      >
-        <Background color="rgb(var(--color-border))" gap={20} />
-        <Controls />
-        <MiniMap
-          nodeColor={(n) => {
-            const info = entityMap[n.id];
-            return info ? nodeColors[info.type] || '#999' : '#999';
-          }}
-          style={{ backgroundColor: 'rgb(var(--color-surface))' }}
-        />
-      </ReactFlow>
-      <div className="absolute bottom-2 right-2 text-[10px] text-[rgb(var(--color-text-secondary))] bg-[rgb(var(--color-surface))] px-2 py-1 rounded">
-        右键节点添加关系 · 右键连线删除
+    <div className="flex h-full" ref={graphRef} onMouseMove={handleMouseMove}>
+      <div className="flex-1 relative min-w-0">
+        {/* 顶栏 */}
+        <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between">
+          <h3 className="text-sm font-medium bg-[rgb(var(--color-surface))] px-2 py-0.5 rounded">关系图谱</h3>
+          <div className="flex items-center gap-2">
+            <button className="btn-primary text-xs flex items-center gap-1" onClick={() => setImportOpen(true)}>
+              <Plus size={12} /> 导入人物
+            </button>
+            {connectingFrom && (
+              <button className="btn-ghost text-xs text-[rgb(var(--color-text-secondary))]" onClick={() => { setConnectingFrom(null); setMousePos(null); }}>
+                取消连线
+              </button>
+            )}
+          </div>
+        </div>
+
+        {connectingFrom && (
+          <div className="absolute top-12 left-3 right-3 z-10 text-xs text-primary-500 bg-[rgb(var(--color-surface))] px-2 py-0.5 rounded">
+            点击另一个头像完成连线
+          </div>
+        )}
+
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeClick={(_, node) => handleNodeClickDirect(node.id)}
+          onEdgeClick={handleEdgeClick}
+          onPaneClick={handlePaneClick}
+          onMove={(_, v) => { viewportRef.current = v; }}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          attributionPosition="bottom-left"
+          minZoom={0.2}
+          maxZoom={2}
+          nodesDraggable
+          nodesConnectable={false}
+          elementsSelectable
+          proOptions={{ hideAttribution: true }}
+        >
+          <Controls />
+          <MiniMap
+            nodeColor={() => '#7C5CBF'}
+            style={{ backgroundColor: '#fff' }}
+          />
+        </ReactFlow>
+
+        {/* 临时连线（屏幕坐标） */}
+        {connectingFrom && connectingNode && mousePos && (() => {
+          const v = viewportRef.current;
+          const cx = (connectingNode.position.x + 40) * v.zoom + v.x;
+          const cy = (connectingNode.position.y + 40) * v.zoom + v.y;
+          return (
+            <svg className="absolute inset-0 pointer-events-none z-20" style={{ width: '100%', height: '100%' }}>
+              <line x1={cx} y1={cy} x2={mousePos.x} y2={mousePos.y}
+                stroke="rgb(var(--primary-600))" strokeWidth={2} strokeDasharray="6 3" />
+            </svg>
+          );
+        })()}
+
+        <div className="absolute bottom-2 left-3 text-[10px] text-[rgb(var(--color-text-secondary))] bg-[rgb(var(--color-surface))] px-2 py-1 rounded">
+          点击头像开始连线 · 再点另一个完成 · 点击线编辑
+        </div>
       </div>
+
+      <RelationshipList
+        relationships={relationships.filter((r) => r.source_type === 'character' && r.target_type === 'character')}
+        characterNames={characterNames}
+        onEdit={onEdit}
+        onDelete={onDeleteRelation}
+      />
+
+      {/* 导入人物弹窗 */}
+      {importOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setImportOpen(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-80 max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[rgb(var(--color-border))]">
+              <h3 className="text-sm font-semibold">导入人物</h3>
+              <button className="p-1 rounded hover:bg-[rgb(var(--color-bg))]" onClick={() => setImportOpen(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {charList.length === 0 ? (
+                <p className="text-xs text-[rgb(var(--color-text-secondary))] text-center py-4">所有人物已在图谱中</p>
+              ) : (
+                charList.map((c) => (
+                  <button
+                    key={c.id}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-[rgb(var(--color-bg))] flex items-center gap-3 transition-colors"
+                    onClick={() => {
+                      setImportedIds((prev) => [...new Set([...prev, c.id])]);
+                      setImportOpen(false);
+                    }}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-600 dark:text-primary-400 text-xs font-bold flex-shrink-0">
+                      {c.avatar_url || c.images?.[0]?.url ? (
+                        <img src={c.avatar_url || c.images?.[0]?.url} alt="" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        c.name?.charAt(0) || '?'
+                      )}
+                    </div>
+                    <span className="text-sm">{c.name}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

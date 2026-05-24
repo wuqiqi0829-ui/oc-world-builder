@@ -13,6 +13,7 @@ interface WorldsState {
   createWorld: (data: NewWorld) => Promise<World>;
   updateWorld: (id: string, changes: UpdateWorld) => Promise<void>;
   deleteWorld: (id: string) => Promise<void>;
+  reorderWorlds: (ids: string[]) => void;
   startRealtime: () => RealtimeChannel;
 }
 
@@ -46,14 +47,23 @@ export const useWorlds = create<WorldsState>((set, get) => ({
   },
 
   createWorld: async (data) => {
-    const world = await worldsApi.create(data);
+    const current = get().worlds;
+    const maxOrder = current.reduce((max, w) => Math.max(max, w.sort_order), 0);
+    const world = await worldsApi.create({ ...data, sort_order: maxOrder + 1 });
     set((s) => ({ worlds: [...s.worlds, world], activeWorldId: world.id }));
     return world;
   },
 
   updateWorld: async (id, changes) => {
+    const originalIdx = get().worlds.findIndex((w) => w.id === id);
     const updated = await worldsApi.update(id, changes);
-    set((s) => ({ worlds: s.worlds.map((w) => (w.id === id ? updated : w)) }));
+    set((s) => {
+      const worlds = [...s.worlds];
+      const currentIdx = worlds.findIndex((w) => w.id === id);
+      if (currentIdx >= 0) worlds.splice(currentIdx, 1);
+      worlds.splice(Math.min(originalIdx, worlds.length), 0, updated);
+      return { worlds };
+    });
   },
 
   deleteWorld: async (id) => {
@@ -67,12 +77,25 @@ export const useWorlds = create<WorldsState>((set, get) => ({
     });
   },
 
+  reorderWorlds: (ids) => {
+    const current = get().worlds;
+    const reordered = ids.map((id) => current.find((w) => w.id === id)!).filter(Boolean);
+    set({ worlds: reordered });
+    ids.forEach((id, i) => {
+      worldsApi.update(id, { sort_order: i } as UpdateWorld).catch(() => {});
+    });
+  },
+
   startRealtime: () => {
     return worldsApi.subscribe(
       (row) => {
         set((s) => {
           const idx = s.worlds.findIndex((w) => w.id === row.id);
-          if (idx >= 0) return { worlds: s.worlds.map((w) => (w.id === row.id ? row : w)) };
+          if (idx >= 0) {
+            const worlds = [...s.worlds];
+            worlds[idx] = row;
+            return { worlds };
+          }
           return { worlds: [...s.worlds, row] };
         });
       },

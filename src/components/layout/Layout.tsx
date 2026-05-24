@@ -23,7 +23,6 @@ interface LayoutProps {
   drawerTitle?: string;
   onCloseDrawer: () => void;
   onNewWorld?: () => void;
-  onNew?: () => void;
   onSelectSearchResult?: (result: SearchResult) => void;
   onExport?: () => void;
   onImport?: () => void;
@@ -40,7 +39,7 @@ interface LayoutProps {
 export default function Layout({
   worlds, activeWorldId, onSelectWorld, onDeleteWorld,
   activeModule, onSelectModule,
-  drawerOpen, drawerTitle, onCloseDrawer, onNewWorld, onNew,
+  drawerOpen, drawerTitle, onCloseDrawer, onNewWorld,
   onSelectSearchResult, onExport, onImport, onShowAllWorlds, userEmail, userName, userAvatar, onLogout, onProfile, children, drawerContent,
 }: LayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -53,7 +52,7 @@ export default function Layout({
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <TopBar onNew={onNew} onNewWorld={onNewWorld} onSelectSearchResult={onSelectSearchResult} onExport={onExport} onImport={onImport} userEmail={userEmail} userName={userName} userAvatar={userAvatar} onLogout={onLogout} onProfile={onProfile} />
+      <TopBar onSelectSearchResult={onSelectSearchResult} onExport={onExport} onImport={onImport} userEmail={userEmail} userName={userName} userAvatar={userAvatar} onLogout={onLogout} onProfile={onProfile} />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop sidebar */}

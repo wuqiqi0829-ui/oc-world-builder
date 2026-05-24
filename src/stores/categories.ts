@@ -9,6 +9,7 @@ interface CategoriesState {
   entryLoading: boolean;
   activeCategoryId: string | null;
   setActiveCategory: (id: string | null) => void;
+  ensureDefaultCategories: (worldId: string) => Promise<void>;
   fetchCategories: (worldId: string) => Promise<void>;
   fetchEntries: (categoryId: string) => Promise<void>;
   createCategory: (data: { world_id: string; name: string; fields?: CustomCategory['fields'] }) => Promise<CustomCategory>;
@@ -17,6 +18,7 @@ interface CategoriesState {
   createEntry: (data: { category_id: string; name: string }) => Promise<CustomEntry>;
   updateEntry: (id: string, changes: Partial<CustomEntry>) => Promise<void>;
   removeEntry: (id: string) => Promise<void>;
+  reorderEntries: (_categoryId: string, orderedIds: string[]) => Promise<void>;
 }
 
 export const useCategories = create<CategoriesState>((set, get) => ({
@@ -28,9 +30,36 @@ export const useCategories = create<CategoriesState>((set, get) => ({
 
   setActiveCategory: (id) => set({ activeCategoryId: id }),
 
+  ensureDefaultCategories: async (worldId: string) => {
+    // 去重已有分类
+    const cats = await customCategoriesApi.list(worldId);
+    const seen = new Map<string, string[]>();
+    for (const c of cats) {
+      if (!seen.has(c.name)) seen.set(c.name, []);
+      seen.get(c.name)!.push(c.id);
+    }
+    // 删除重复项（保留最早创建的）
+    for (const [, ids] of seen) {
+      if (ids.length > 1) {
+        const [, ...remove] = ids;
+        for (const id of remove) {
+          customCategoriesApi.delete(id).catch(() => {});
+        }
+      }
+    }
+    // 创建缺失的分类
+    const defaults = ['种族', '职业', '组织', '势力'];
+    for (const name of defaults) {
+      if (!seen.has(name)) {
+        await customCategoriesApi.create({ world_id: worldId, name, fields: [] } as Record<string, unknown>);
+      }
+    }
+  },
+
   fetchCategories: async (worldId) => {
     set({ loading: true });
     try {
+      await get().ensureDefaultCategories(worldId);
       const cats = await customCategoriesApi.list(worldId);
       set({ categories: cats, loading: false });
       if (cats.length > 0 && !get().activeCategoryId) {
@@ -42,7 +71,7 @@ export const useCategories = create<CategoriesState>((set, get) => ({
   fetchEntries: async (categoryId) => {
     set({ entryLoading: true });
     try {
-      const entries = await customEntriesApi.list(categoryId);
+      const entries = await customEntriesApi.listByCategory(categoryId);
       set((s) => ({ entries: { ...s.entries, [categoryId]: entries }, entryLoading: false }));
     } catch { set({ entryLoading: false }); }
   },
@@ -102,5 +131,13 @@ export const useCategories = create<CategoriesState>((set, get) => ({
       }
       return { entries: newEntries };
     });
+  },
+
+  reorderEntries: async (_categoryId, orderedIds) => {
+    await Promise.all(
+      orderedIds.map((id, i) =>
+        customEntriesApi.update(id, { sort_order: i } as Record<string, unknown>).catch(() => {})
+      )
+    );
   },
 }));

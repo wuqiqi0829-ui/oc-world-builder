@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Globe, Clock, Map, Users, Briefcase, Building2,
-  Package, GitBranch, BookOpen, Lightbulb, ChevronLeft,
+  Package, GitBranch, BookOpen, Lightbulb, Image, Table2, ChevronLeft,
   Trash2, Plus, ChevronDown
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -31,10 +31,12 @@ const modules = [
   { id: 'map', label: '地图', icon: Map },
   { id: 'timeline', label: '时间线', icon: Clock },
   { id: 'storylines', label: '主线剧情', icon: BookOpen },
-  { id: 'categories', label: '职业/种族', icon: Briefcase },
+  { id: 'categories', label: '职业种族', icon: Briefcase },
   { id: 'organizations', label: '组织势力', icon: Building2 },
   { id: 'relationships', label: '关系图谱', icon: GitBranch },
   { id: 'items', label: '物品图鉴', icon: Package },
+  { id: 'illustrations', label: '插图集', icon: Image },
+  { id: 'tables', label: 'OC表格', icon: Table2 },
   { id: 'notes', label: '灵感速记', icon: Lightbulb },
 ];
 
@@ -46,7 +48,7 @@ export default function Sidebar({
 
   if (collapsed) {
     return (
-      <aside className="w-14 border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex flex-col items-center py-3 gap-2 flex-shrink-0">
+      <aside className="w-14 border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] flex flex-col items-center py-3 gap-2 flex-shrink-0">
         <button onClick={onToggleCollapse} className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))] mb-2">
           <ChevronLeft size={18} className="rotate-180 text-[rgb(var(--color-text-secondary))]" />
         </button>
@@ -70,7 +72,7 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="w-60 h-full border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex flex-col flex-shrink-0 overflow-hidden">
+    <aside className="w-60 h-full border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] flex flex-col flex-shrink-0 overflow-hidden">
       <div className="p-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
         <span className="text-sm font-medium">世界观</span>
         <div className="flex items-center gap-1">
@@ -116,7 +118,7 @@ export default function Sidebar({
                 className={clsx(
                   'group flex gap-2.5 rounded-card p-2 cursor-pointer transition-all border',
                   activeWorldId === w.id
-                    ? 'bg-primary-100/60 dark:bg-primary-900/40 border-primary-300 shadow-[0_0_12px_rgba(124,92,191,0.15)]'
+                    ? 'bg-primary-100/60 dark:bg-primary-900/40 border-primary-300 shadow-[0_0_12px_rgb(var(--primary-600)/0.15)]'
                     : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-border))]/50'
                 )}
                 onClick={() => onSelectWorld(w.id)}
@@ -172,7 +174,7 @@ export default function Sidebar({
       </nav>
 
       <div className="p-3 border-t border-[rgb(var(--color-border))]">
-        <button className="btn-ghost text-xs w-full text-left">设置</button>
+        <button className="btn-ghost text-xs w-full text-left" onClick={() => onSelectModule('settings')}>设置</button>
       </div>
     </aside>
   );

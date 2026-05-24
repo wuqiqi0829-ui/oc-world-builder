@@ -14,14 +14,15 @@ import clsx from 'clsx';
 interface Props {
   images: ImageItem[];
   onChange: (images: ImageItem[]) => void;
+  maxImages?: number;
 }
 
-function SortableImage({ image, index, onRemove, onLabelChange, onPreview }: {
+function SortableImage({ image, index, onRemove, onPreview, hideHandle }: {
   image: ImageItem;
   index: number;
   onRemove: () => void;
-  onLabelChange: (label: string) => void;
   onPreview: () => void;
+  hideHandle?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: index.toString() });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -31,27 +32,21 @@ function SortableImage({ image, index, onRemove, onLabelChange, onPreview }: {
       ref={setNodeRef}
       style={style}
       className={clsx(
-        'card flex gap-3 items-start group relative',
-        isDragging && 'shadow-lg z-10 opacity-90'
+        'card flex items-start group relative',
+        isDragging && 'shadow-lg z-10 opacity-90',
+        hideHandle ? 'gap-0' : 'gap-3'
       )}
     >
-      <button {...attributes} {...listeners} className="mt-1 cursor-grab active:cursor-grabbing text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text))]">
-        <GripVertical size={16} />
-      </button>
+      {!hideHandle && (
+        <button {...attributes} {...listeners} className="mt-1 cursor-grab active:cursor-grabbing text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text))]">
+          <GripVertical size={16} />
+        </button>
+      )}
       <div
-        className="w-24 h-24 rounded-input bg-[rgb(var(--color-bg))] overflow-hidden flex-shrink-0 cursor-pointer border border-[rgb(var(--color-border))]"
+        className="w-full h-36 rounded-card bg-[rgb(var(--color-bg))] overflow-hidden flex-shrink-0 cursor-pointer border border-[rgb(var(--color-border))]"
         onClick={onPreview}
       >
-        <img src={image.url} alt={image.label} className="w-full h-full object-cover" loading="lazy" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <input
-          type="text"
-          className="input w-full text-sm"
-          placeholder="图片备注..."
-          value={image.label}
-          onChange={(e) => onLabelChange(e.target.value)}
-        />
+        <img src={image.url} alt="" className="w-full h-full object-cover" loading="lazy" />
       </div>
       <button
         className="absolute top-2 right-2 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
@@ -63,7 +58,7 @@ function SortableImage({ image, index, onRemove, onLabelChange, onPreview }: {
   );
 }
 
-export default function ImageUploader({ images, onChange }: Props) {
+export default function ImageUploader({ images, onChange, maxImages }: Props) {
   const [uploading, setUploading] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -123,29 +118,46 @@ export default function ImageUploader({ images, onChange }: Props) {
     onChange(images.filter((_, i) => i !== index).map((img, i) => ({ ...img, order: i })));
   };
 
-  const updateLabel = (index: number, label: string) => {
-    onChange(images.map((img, i) => (i === index ? { ...img, label } : img)));
-  };
-
   return (
     <div onPaste={handlePaste} className="space-y-3">
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={images.map((_, i) => i.toString())} strategy={rectSortingStrategy}>
-          <div className="space-y-2">
-            {images.map((img, i) => (
-              <SortableImage
-                key={`${img.url}-${i}`}
-                image={img}
-                index={i}
-                onRemove={() => removeImage(i)}
-                onLabelChange={(label) => updateLabel(i, label)}
-                onPreview={() => setLightboxIndex(i)}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+      {maxImages === 1 ? (
+        <div className="space-y-2">
+          {images.map((img, i) => (
+            <div key={`${img.url}-${i}`} className="group relative">
+              <div
+                className="w-full h-48 rounded-card bg-[rgb(var(--color-bg))] overflow-hidden cursor-pointer border border-[rgb(var(--color-border))]"
+                onClick={() => setLightboxIndex(i)}
+              >
+                <img src={img.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+              </div>
+              <button
+                className="absolute top-2 right-2 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                onClick={() => removeImage(i)}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={images.map((_, i) => i.toString())} strategy={rectSortingStrategy}>
+            <div className="space-y-2">
+              {images.map((img, i) => (
+                <SortableImage
+                  key={`${img.url}-${i}`}
+                  image={img}
+                  index={i}
+                  onRemove={() => removeImage(i)}
+                  onPreview={() => setLightboxIndex(i)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
 
+      {(!maxImages || images.length < maxImages) && (
       <div
         ref={dropZoneRef}
         className={clsx(
@@ -165,7 +177,7 @@ export default function ImageUploader({ images, onChange }: Props) {
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          multiple
+          multiple={maxImages !== 1}
           className="hidden"
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
@@ -183,6 +195,7 @@ export default function ImageUploader({ images, onChange }: Props) {
           </div>
         )}
       </div>
+      )}
 
       {lightboxIndex !== null && (
         <Lightbox

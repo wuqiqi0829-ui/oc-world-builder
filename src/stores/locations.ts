@@ -7,22 +7,27 @@ interface LocationsState {
   locations: Location[];
   loading: boolean;
   mapImageUrl: string;
-  setMapImageUrl: (url: string) => void;
+  setMapImageUrl: (url: string, worldId?: string) => void;
   fetch: (worldId: string) => Promise<void>;
   create: (data: Partial<Location> & { world_id: string; name: string }) => Promise<Location>;
   update: (id: string, changes: Partial<Location>) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  reorder: (ids: string[]) => void;
   startRealtime: (worldId: string) => RealtimeChannel;
 }
 
-export const useLocations = create<LocationsState>((set) => ({
+export const useLocations = create<LocationsState>((set, get) => ({
   locations: [],
   loading: false,
   mapImageUrl: '',
 
-  setMapImageUrl: (url) => {
+  setMapImageUrl: (url, worldId?: string) => {
     set({ mapImageUrl: url });
-    if (url) localStorage.setItem('oc-map-url', url);
+    const wid = worldId || get().locations[0]?.world_id;
+    if (wid) {
+      if (url) localStorage.setItem(`oc-map-${wid}`, url);
+      else localStorage.removeItem(`oc-map-${wid}`);
+    }
   },
 
   fetch: async (worldId) => {
@@ -50,6 +55,13 @@ export const useLocations = create<LocationsState>((set) => ({
   remove: async (id) => {
     await locationsApi.delete(id);
     set((s) => ({ locations: s.locations.filter((l) => l.id !== id) }));
+  },
+
+  reorder: (ids) => {
+    const current = get().locations;
+    const reordered = ids.map((id) => current.find((l) => l.id === id)!).filter(Boolean);
+    set({ locations: reordered });
+    ids.forEach((id, i) => { locationsApi.update(id, { sort_order: i } as Record<string, unknown>).catch(() => {}); });
   },
 
   startRealtime: (worldId) => {

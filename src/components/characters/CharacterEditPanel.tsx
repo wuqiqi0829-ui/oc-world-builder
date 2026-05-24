@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCharacters } from '@/stores/characters';
-import ImageUploader from '@/components/ui/ImageUploader';
+import OutfitImageUploader from '@/components/ui/OutfitImageUploader';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { Trash2, Check } from 'lucide-react';
 
@@ -29,7 +29,8 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
   const isNew = !characterId;
 
   const [form, setForm] = useState(emptyForm);
-  const [images, setImages] = useState<{ url: string; label: string; order: number }[]>([]);
+  const [images, setImages] = useState<{ url: string; label: string; order: number; subGroup?: string }[]>([]);
+  const [outfitDescs, setOutfitDescs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
@@ -38,26 +39,31 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
     if (!characterId) {
       setForm(emptyForm);
       setImages([]);
+      setOutfitDescs({});
       setCreatedId(null);
       setSaved(false);
       return;
     }
     const ch = characters.find((c) => c.id === characterId);
     if (ch) {
+      const combined = [ch.appearance, ch.personality, ch.background, ch.abilities]
+        .filter(Boolean)
+        .join('<p></p>');
       setForm({
         name: ch.name || '',
         nickname: ch.nickname || '',
         gender: ch.gender || '',
         age: ch.age || '',
-        appearance: ch.appearance || '',
-        personality: ch.personality || '',
-        background: ch.background || '',
-        abilities: ch.abilities || '',
+        appearance: '',
+        personality: '',
+        background: combined,
+        abilities: '',
         catchphrase: ch.catchphrase || '',
         occupation: ch.occupation || '',
         faction: ch.faction || '',
       });
       setImages(ch.images || []);
+      setOutfitDescs(ch.outfit_descriptions || {});
     }
     setSaved(false);
   }, [characterId, characters]);
@@ -78,6 +84,7 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
       occupation: form.occupation,
       faction: form.faction,
       images,
+      outfit_descriptions: outfitDescs,
     };
 
     try {
@@ -121,25 +128,12 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      {saved && (
         <div className="flex items-center gap-2">
-          <button className="btn-primary text-sm" onClick={handleSave} disabled={saving || !form.name.trim()}>
-            {saving ? '保存中...' : '保存'}
-          </button>
-          {saved && (
-            <span className="text-xs text-green-500 flex items-center gap-1">
-              <Check size={14} /> 保存成功
-            </span>
-          )}
+          <Check size={14} className="text-green-500" />
+          <span className="text-xs text-green-500">保存成功</span>
         </div>
-        <div className="flex gap-2">
-          {!isNew && (
-            <button className="btn-ghost text-xs text-red-500 flex items-center gap-1" onClick={handleDelete}>
-              <Trash2 size={12} /> 删除
-            </button>
-          )}
-        </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         {field('姓名 *', 'name')}
@@ -150,18 +144,36 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
         {field('阵营', 'faction')}
       </div>
 
-      {field('口头禅', 'catchphrase')}
+      {field('简介', 'catchphrase')}
 
-      <div className="space-y-3">
-        {field('外貌描述', 'appearance', 'richtext')}
-        {field('性格', 'personality', 'richtext')}
-        {field('背景故事', 'background', 'richtext')}
-        {field('能力设定', 'abilities', 'richtext')}
+      <div>
+        <label className="text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1 block">人物介绍</label>
+        <RichTextEditor
+          content={form.background}
+          onChange={(html) => setForm((f) => ({ ...f, background: html, appearance: '', personality: '', abilities: '' }))}
+          minHeight="200px"
+          placeholder="外貌、性格、背景、能力..."
+          showToolbar={false}
+        />
       </div>
 
       <div>
-        <label className="text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-2 block">立绘 / 头像 / 参考图</label>
-        <ImageUploader images={images} onChange={setImages} />
+        <label className="text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-2 block">服设</label>
+        <OutfitImageUploader images={images} onChange={setImages} outfitDescriptions={outfitDescs} onDescriptionsChange={setOutfitDescs} />
+      </div>
+
+      <div className="flex justify-between gap-2 sticky bottom-0 bg-[rgb(var(--color-bg))]/95 backdrop-blur-sm pt-3 pb-3 px-3 -mx-1 rounded-lg border border-[rgb(var(--color-border))] shadow-[0_-2px_8px_rgb(var(--primary-600)/0.1)]">
+        {!isNew ? (
+          <button className="btn-ghost text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-1" onClick={handleDelete}>
+            <Trash2 size={14} /> 删除
+          </button>
+        ) : <div />}
+        <div className="flex gap-2">
+          <button className="btn-ghost text-sm" onClick={onClose}>取消</button>
+          <button className="btn-primary text-sm flex items-center gap-2" onClick={handleSave} disabled={saving || !form.name.trim()}>
+            {saving ? '保存中...' : '保存'}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Moon, Sun, Download, Upload, Plus, Globe, LogOut, User } from 'lucide-react';
+import { Search, Moon, Sun, Download, Upload, LogOut, User } from 'lucide-react';
 import { useTheme } from '@/stores/theme';
 import { globalSearch, type SearchResult } from '@/lib/db';
 import SearchResults from '@/components/ui/SearchResults';
 
 interface TopBarProps {
-  onNew?: () => void;
-  onNewWorld?: () => void;
   onExport?: () => void;
   onImport?: () => void;
   onSelectSearchResult?: (result: SearchResult) => void;
@@ -17,7 +15,7 @@ interface TopBarProps {
   onProfile?: () => void;
 }
 
-export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelectSearchResult, userEmail, userName, userAvatar, onLogout, onProfile }: TopBarProps) {
+export default function TopBar({ onExport, onImport, onSelectSearchResult, userEmail, userName, userAvatar, onLogout, onProfile }: TopBarProps) {
   const { theme, toggle } = useTheme();
   const [appTitle, setAppTitle] = useState(() => localStorage.getItem('oc-app-title') || 'OC Builder');
   const [query, setQuery] = useState('');
@@ -62,7 +60,7 @@ export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelect
   };
 
   return (
-    <header className="h-14 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex items-center gap-4 px-4 flex-shrink-0">
+    <header className="h-14 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] flex items-center gap-4 px-4 flex-shrink-0">
       <h1
         className="text-base font-semibold text-primary-600 whitespace-nowrap hidden md:block min-w-[80px] max-w-[160px] truncate flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
         onClick={() => {
@@ -96,12 +94,6 @@ export default function TopBar({ onNew, onNewWorld, onExport, onImport, onSelect
       </div>
 
       <div className="flex items-center gap-1 flex-shrink-0">
-        <button className="btn-ghost h-9 w-9 p-0 flex items-center justify-center" title="新建世界观" onClick={onNewWorld}>
-          <Globe size={18} />
-        </button>
-        <button className="btn-ghost h-9 w-9 p-0 flex items-center justify-center" title="新建" onClick={onNew}>
-          <Plus size={18} />
-        </button>
         <button className="btn-ghost h-9 w-9 p-0 flex items-center justify-center" title="导出" onClick={onExport}>
           <Download size={18} />
         </button>

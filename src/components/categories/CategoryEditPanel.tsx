@@ -55,14 +55,7 @@ export default function CategoryEditPanel({ worldId, categoryId, onClose }: Prop
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">{isNew ? '新建分类' : '编辑分类'}</h3>
-        {!isNew && (
-          <button className="btn-ghost text-xs text-red-500 flex items-center gap-1" onClick={handleDelete}>
-            <Trash2 size={12} /> 删除
-          </button>
-        )}
-      </div>
+      <h3 className="text-sm font-medium">{isNew ? '新建分类' : '编辑分类'}</h3>
 
       <div>
         <label className="text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1 block">分类名称 *</label>
@@ -99,9 +92,19 @@ export default function CategoryEditPanel({ worldId, categoryId, onClose }: Prop
         </div>
       </div>
 
-      <button className="btn-primary text-sm w-full" onClick={handleSave} disabled={!name.trim()}>
-        {isNew ? '创建分类' : '保存修改'}
-      </button>
+      <div className="flex justify-between gap-2">
+        {!isNew ? (
+          <button className="btn-ghost text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-1" onClick={handleDelete}>
+            <Trash2 size={14} /> 删除
+          </button>
+        ) : <div />}
+        <div className="flex gap-2">
+          <button className="btn-ghost text-sm" onClick={onClose}>取消</button>
+          <button className="btn-primary text-sm" onClick={handleSave} disabled={!name.trim()}>
+            {isNew ? '创建分类' : '保存修改'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

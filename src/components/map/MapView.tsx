@@ -1,39 +1,77 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import type { Location } from '@/lib/database';
+import { useState, useRef } from 'react';
 import { useLocations } from '@/stores/locations';
 import { uploadImage } from '@/lib/db';
-import { Map, Plus, Upload, MapPin, Filter, ChevronRight } from 'lucide-react';
+import { Map, Plus, Upload, GripVertical, EyeOff } from 'lucide-react';
+import type { Location } from '@/lib/database';
+import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
 
-const markerColors: Record<string, string> = {
-  '': '#7C5CBF',
-  '城市': '#E85D75',
-  '自然': '#4CAF50',
-  '遗迹': '#FF9800',
-  '军事': '#607D8B',
-  '其他': '#9C27B0',
-};
+function SortableLocationCard({ loc, onClick, showHandle }: {
+  loc: Location;
+  onClick: () => void;
+  showHandle: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: loc.id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+  const bgUrl = loc.card_bg_url || loc.images?.[0]?.url;
+
+  return (
+    <div ref={setNodeRef} style={style} className={clsx('h-full', isDragging && 'z-10 opacity-90')}>
+      <div className="relative group h-full">
+        <div className="relative overflow-hidden rounded-xl border border-primary-100 dark:border-primary-900/30 shadow-[0_4px_20px_rgb(var(--primary-600)/0.1)] h-40 flex items-center bg-white hover:shadow-[0_8px_30px_rgb(var(--primary-600)/0.2)] hover:border-primary-200 transition-all cursor-pointer"
+          onClick={onClick}>
+          {bgUrl && (
+            <>
+              <div className="absolute inset-0">
+                <img src={bgUrl} alt="" className="w-full h-full object-cover opacity-80" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent" />
+            </>
+          )}
+          <div className="relative text-center w-full px-5 z-10">
+            <span className="text-lg font-semibold block text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">{loc.name}</span>
+            <div className="flex flex-col gap-1 mt-3 items-center">
+              {loc.region && (
+                <span className="text-sm bg-white/20 text-white px-2.5 py-0.5 rounded-full backdrop-blur-sm">区域：{loc.region}</span>
+              )}
+              {loc.category && (
+                <span className="text-sm bg-white/20 text-white px-2.5 py-0.5 rounded-full backdrop-blur-sm">简介：{loc.category}</span>
+              )}
+            </div>
+          </div>
+        </div>
+        {showHandle && (
+          <button {...attributes} {...listeners}
+            className="absolute top-2 left-2 p-1 rounded bg-white/70 dark:bg-white/10 backdrop-blur-sm text-primary-400 border border-white/50 shadow-sm cursor-grab active:cursor-grabbing hover:bg-white/90 dark:hover:bg-white/20 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical size={12} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   locations: Location[];
-  onCreate: (x: number, y: number) => void;
-  onEdit: (id: string) => void;
   worldId: string;
+  onEdit: (id: string) => void;
+  onCreate: () => void;
+  onPreview?: (id: string) => void;
 }
 
-export default function MapView({ locations, onCreate, onEdit, worldId }: Props) {
-  const { mapImageUrl, setMapImageUrl, update } = useLocations();
+export default function MapView({ locations, worldId, onEdit, onCreate, onPreview }: Props) {
+  const { mapImageUrl, setMapImageUrl, reorder } = useLocations();
   const [uploading, setUploading] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('');
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
+  const [showHandle, setShowHandle] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(`oc-map-${worldId}`);
-    if (saved) setMapImageUrl(saved);
-  }, [worldId, setMapImageUrl]);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const handleMapUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,51 +79,23 @@ export default function MapView({ locations, onCreate, onEdit, worldId }: Props)
     setUploading(true);
     try {
       const url = await uploadImage(file, 'maps');
-      setMapImageUrl(url);
+      setMapImageUrl(url, worldId);
       localStorage.setItem(`oc-map-${worldId}`, url);
     } catch { /**/ }
     setUploading(false);
   };
 
-  const handleMapClick = (e: React.MouseEvent) => {
-    if (!mapRef.current || !mapImageUrl || draggingId) return;
-    const rect = mapRef.current.getBoundingClientRect();
-    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
-    onCreate(x, y);
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = locations.findIndex((l) => l.id === active.id);
+    const newIndex = locations.findIndex((l) => l.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = [...locations];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+    reorder(reordered.map((l) => l.id));
   };
-
-  const handleMarkerDrag = useCallback(async (id: string, e: React.MouseEvent) => {
-    if (!mapRef.current) return;
-    e.stopPropagation();
-    setDraggingId(id);
-
-    const onMove = (ev: MouseEvent) => {
-      if (!mapRef.current) return;
-      const rect = mapRef.current.getBoundingClientRect();
-      const x = Math.max(0, Math.min(100, Math.round((ev.clientX - rect.left) / rect.width * 100)));
-      const y = Math.max(0, Math.min(100, Math.round((ev.clientY - rect.top) / rect.height * 100)));
-      const el = document.getElementById(`marker-${id}`);
-      if (el) { el.style.left = `${x}%`; el.style.top = `${y}%`; }
-    };
-
-    const onUp = (ev: MouseEvent) => {
-      if (!mapRef.current) return;
-      const rect = mapRef.current.getBoundingClientRect();
-      const x = Math.max(0, Math.min(100, Math.round((ev.clientX - rect.left) / rect.width * 100)));
-      const y = Math.max(0, Math.min(100, Math.round((ev.clientY - rect.top) / rect.height * 100)));
-      update(id, { map_x: x, map_y: y } as Partial<Location>);
-      setDraggingId(null);
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }, [update]);
-
-  const filtered = activeFilter ? locations.filter((l) => l.category === activeFilter) : locations;
-  const categories = [...new Set(locations.map((l) => l.category).filter(Boolean))].sort();
 
   if (!mapImageUrl) {
     return (
@@ -95,15 +105,9 @@ export default function MapView({ locations, onCreate, onEdit, worldId }: Props)
         </div>
         <h2 className="text-lg font-semibold mb-2">上传世界观地图</h2>
         <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6 text-center max-w-xs">
-          上传一张你的世界观地图底图，然后点击地图添加地点标记
+          上传你的世界观地图底图
         </p>
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleMapUpload}
-        />
+        <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleMapUpload} />
         <button className="btn-primary text-sm flex items-center gap-2" onClick={() => imageInputRef.current?.click()} disabled={uploading}>
           <Upload size={16} />
           {uploading ? '上传中...' : '上传地图底图'}
@@ -113,101 +117,43 @@ export default function MapView({ locations, onCreate, onEdit, worldId }: Props)
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-full">
-      {/* Map area */}
-      <div className="flex-1 min-h-[400px]">
+    <div className="flex flex-col gap-4">
+      <div className="flex-shrink-0">
         <div className="flex items-center gap-2 mb-2">
-          {categories.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap">
-              <Filter size={14} className="text-[rgb(var(--color-text-secondary))]" />
-              <button
-                className={clsx('text-xs px-2 py-0.5 rounded-full', !activeFilter ? 'bg-primary-500 text-white' : 'bg-[rgb(var(--color-border))]')}
-                onClick={() => setActiveFilter('')}
-              >
-                全部
-              </button>
-              {categories.map((c) => (
-                <button
-                  key={c}
-                  className={clsx('text-xs px-2 py-0.5 rounded-full text-white')}
-                  style={{ backgroundColor: activeFilter === c ? (markerColors[c] || '#7C5CBF') : `${markerColors[c] || '#7C5CBF'}80` }}
-                  onClick={() => setActiveFilter(activeFilter === c ? '' : c)}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            className="btn-ghost text-xs !px-2 !py-1"
-            onClick={() => { setMapImageUrl(''); localStorage.removeItem(`oc-map-${worldId}`); }}
-          >
-            更换底图
-          </button>
+          <button className="text-xs px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400 border border-primary-200 dark:border-primary-700/50 hover:bg-primary-100 transition-colors" onClick={() => { setMapImageUrl('', worldId); }}>更换底图</button>
         </div>
-
-        <div
-          ref={mapRef}
-          className="relative rounded-card overflow-hidden border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))]"
-          style={{ aspectRatio: '16/10' }}
-          onClick={handleMapClick}
-        >
+        <div className="rounded-card overflow-hidden border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))]" style={{ aspectRatio: '16/9' }}>
           <img src={mapImageUrl} alt="世界地图" className="w-full h-full object-contain" draggable={false} />
-          {filtered.map((loc) => (
-            <div
-              key={loc.id}
-              id={`marker-${loc.id}`}
-              className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer group z-10"
-              style={{ left: `${loc.map_x}%`, top: `${loc.map_y}%` }}
-              onMouseDown={(e) => handleMarkerDrag(loc.id, e)}
-              onClick={(e) => { if (!draggingId) { e.stopPropagation(); onEdit(loc.id); } }}
-              onMouseEnter={() => setHoveredId(loc.id)}
-              onMouseLeave={() => setHoveredId(null)}
-            >
-              <MapPin
-                size={24}
-                fill={markerColors[loc.category] || '#7C5CBF'}
-                color="#fff"
-                className="drop-shadow-md hover:scale-125 transition-transform"
-              />
-              {(hoveredId === loc.id) && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-[rgb(var(--color-surface))] shadow-lg rounded-card px-2 py-1 text-xs whitespace-nowrap z-20 pointer-events-none">
-                  {loc.name}
-                </div>
-              )}
-            </div>
-          ))}
         </div>
-        <p className="text-[10px] text-[rgb(var(--color-text-secondary))] mt-1 text-center">
-          点击地图空白处添加标记 · 拖拽标记调整位置 · 点击标记编辑详情
-        </p>
       </div>
 
-      {/* Location list sidebar */}
-      <div className="lg:w-64 flex-shrink-0">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium">地点列表 ({filtered.length})</h3>
-          <button className="btn-ghost text-xs !px-2 !py-1 flex items-center gap-1" onClick={() => onCreate(50, 50)}>
-            <Plus size={12} /> 新增
-          </button>
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium">地点列表 ({locations.length})</h3>
+          <div className="flex items-center gap-2">
+            <button className="btn-ghost text-xs flex items-center gap-1" onClick={() => setShowHandle(!showHandle)} title={showHandle ? '隐藏拖拽' : '显示拖拽'}>
+              <EyeOff size={14} className={showHandle ? '' : 'text-primary-500'} />
+            </button>
+            <button className="text-xs flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400 border border-primary-200 dark:border-primary-700/50 hover:bg-primary-100 transition-colors" onClick={onCreate}>
+              <Plus size={12} /> 新建地点
+            </button>
+          </div>
         </div>
-        <div className="space-y-1 max-h-[400px] lg:max-h-full overflow-y-auto">
-          {filtered.length === 0 ? (
-            <p className="text-xs text-[rgb(var(--color-text-secondary))] px-2 py-4 text-center">暂无地点</p>
-          ) : (
-            filtered.map((loc) => (
-              <button
-                key={loc.id}
-                className="flex items-center gap-2 w-full px-2.5 py-2 rounded-btn text-sm text-left hover:bg-[rgb(var(--color-border))] transition-colors"
-                onClick={() => onEdit(loc.id)}
-              >
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: markerColors[loc.category] || '#7C5CBF' }} />
-                <span className="truncate flex-1">{loc.name}</span>
-                <ChevronRight size={14} className="text-[rgb(var(--color-text-secondary))] flex-shrink-0" />
-              </button>
-            ))
-          )}
-        </div>
+        {locations.length === 0 ? (
+          <p className="text-xs text-[rgb(var(--color-text-secondary))] py-6 text-center">暂无地点</p>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={locations.map((l) => l.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-8">
+                {locations.map((loc) => (
+                  <SortableLocationCard key={loc.id} loc={loc}
+                    onClick={() => onPreview ? onPreview(loc.id) : onEdit(loc.id)}
+                    showHandle={showHandle} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
       </div>
     </div>
   );

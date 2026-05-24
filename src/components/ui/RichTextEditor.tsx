@@ -1,8 +1,10 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import { useEffect } from 'react';
 import StarterKit from '@tiptap/starter-kit';
+import Paragraph from '@tiptap/extension-paragraph';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+
 import {
   Bold, Italic, List, ListOrdered, Quote, Minus, ImageIcon,
   Undo2, Redo2,
@@ -26,6 +28,12 @@ export default function RichTextEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3] },
+        paragraph: false,
+      }),
+      Paragraph.extend({
+        parseHTML() {
+          return [{ tag: 'p', preserveWhitespace: 'full' }];
+        },
       }),
       Image.configure({ inline: false, allowBase64: false }),
       Placeholder.configure({ placeholder }),
@@ -86,7 +94,7 @@ export default function RichTextEditor({
   return (
     <div
       className={clsx(
-        'border border-[rgb(var(--color-border))] rounded-input overflow-hidden cursor-text',
+        'border border-[rgb(var(--color-border))] rounded-input',
         'focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent'
       )}
       onClick={() => editor.commands.focus()}

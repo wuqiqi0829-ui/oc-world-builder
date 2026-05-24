@@ -71,11 +71,17 @@ export default function EntryEditPanel({ worldId: _worldId, categoryId, entryId,
             {status === 'saving' ? '保存中...' : status === 'saved' ? '已自动保存' : status === 'error' ? '保存失败' : ''}
           </span>
         </div>
-        {!isNew && (
-          <button className="btn-ghost text-xs text-red-500 flex items-center gap-1" onClick={handleDelete}>
-            <Trash2 size={12} /> 删除
+      </div>
+      <div className="flex justify-between gap-2">
+        {!isNew ? (
+          <button className="btn-ghost text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-1" onClick={handleDelete}>
+            <Trash2 size={14} /> 删除
           </button>
-        )}
+        ) : <div />}
+        <div className="flex gap-2">
+          <button className="btn-ghost text-sm" onClick={onClose}>取消</button>
+          <button className="btn-primary text-sm" onClick={onClose}>保存</button>
+        </div>
       </div>
 
       <div>

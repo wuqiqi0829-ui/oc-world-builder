@@ -13,10 +13,11 @@ interface CharactersState {
   create: (data: Partial<Character> & { world_id: string; name: string }) => Promise<Character>;
   update: (id: string, changes: Partial<Character>) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  reorder: (ids: string[]) => void;
   startRealtime: (worldId: string) => RealtimeChannel;
 }
 
-export const useCharacters = create<CharactersState>((set) => ({
+export const useCharacters = create<CharactersState>((set, get) => ({
   characters: [],
   loading: false,
   error: null,
@@ -51,6 +52,13 @@ export const useCharacters = create<CharactersState>((set) => ({
       characters: s.characters.filter((c) => c.id !== id),
       activeId: s.activeId === id ? null : s.activeId,
     }));
+  },
+
+  reorder: (ids) => {
+    const current = get().characters;
+    const reordered = ids.map((id) => current.find((c) => c.id === id)!).filter(Boolean);
+    set({ characters: reordered });
+    ids.forEach((id, i) => { charactersApi.update(id, { sort_order: i } as Record<string, unknown>).catch(() => {}); });
   },
 
   startRealtime: (worldId) => {

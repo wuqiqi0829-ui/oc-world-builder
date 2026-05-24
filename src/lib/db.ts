@@ -1,9 +1,10 @@
 import { supabase } from './supabase';
 import type {
   World, NewWorld, UpdateWorld,
-  Character, TimelineEvent, Location,
+  Character, Timeline, TimelineEvent, Location,
   Organization, Item, Relationship,
   Storyline, Note, NewNote, UpdateNote,
+  Illustration, TableItem,
   Tag, CustomCategory, CustomEntry,
 } from './database';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -25,7 +26,7 @@ function crud<T extends { id: string }>(table: string) {
         .from(table)
         .select('*')
         .eq('world_id', worldId)
-        .order('created_at', { ascending: false });
+        .order('sort_order').order('created_at', { ascending: false });
       if (error) throw error;
       return data as T[];
     },
@@ -74,7 +75,7 @@ function crud<T extends { id: string }>(table: string) {
 
 export const worldsApi = {
   list: async () => {
-    const { data, error } = await supabase.from('worlds').select('*').order('sort_order');
+    const { data, error } = await supabase.from('worlds').select('*').order('sort_order').order('created_at');
     if (error) throw error;
     return data as World[];
   },
@@ -104,11 +105,36 @@ export const worldsApi = {
 };
 
 export const charactersApi = crud<Character>('characters');
-export const timelineApi = crud<TimelineEvent>('timeline_events');
-export const locationsApi = crud<Location>('locations');
+export const timelinesApi = crud<Timeline>('timelines');
+export const timelineApi = {
+  ...crud<TimelineEvent>('timeline_events'),
+  listByTimeline: async (timelineId: string) => {
+    const { data, error } = await supabase
+      .from('timeline_events')
+      .select('*')
+      .eq('timeline_id', timelineId)
+      .order('sort_order', { ascending: true });
+    if (error) throw error;
+    return data as TimelineEvent[];
+  },
+};
+export const locationsApi = {
+  ...crud<Location>('locations'),
+  list: async (worldId: string) => {
+    const { data, error } = await supabase
+      .from('locations')
+      .select('*')
+      .eq('world_id', worldId)
+      .order('sort_order').order('created_at', { ascending: true });
+    if (error) throw error;
+    return data as Location[];
+  },
+};
 export const organizationsApi = crud<Organization>('organizations');
 export const itemsApi = crud<Item>('items');
 export const storylinesApi = crud<Storyline>('storylines');
+export const illustrationsApi = crud<Illustration>('illustrations');
+export const tablesApi = crud<TableItem>('tables');
 
 // Relationships needs special query (by source or target)
 export const relationshipsApi = {
@@ -196,12 +222,31 @@ export const tagsApi = {
 };
 
 export const customCategoriesApi = crud<CustomCategory>('custom_categories');
-export const customEntriesApi = crud<CustomEntry>('custom_entries');
+export const customEntriesApi = {
+  ...crud<CustomEntry>('custom_entries'),
+  listByCategory: async (categoryId: string): Promise<CustomEntry[]> => {
+    const { data, error } = await supabase.from('custom_entries').select('*').eq('category_id', categoryId).order('sort_order').order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as CustomEntry[];
+  },
+};
 
 // ============================================
 // 图片上传
 // ============================================
 export async function uploadImage(file: File, path: string): Promise<string> {
+  const ext = file.name.split('.').pop() || 'png';
+  const fileName = `${path}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error, data } = await supabase.storage.from('images').upload(fileName, file, {
+    cacheControl: '3600',
+    upsert: false,
+  });
+  if (error) throw error;
+  const { data: urlData } = supabase.storage.from('images').getPublicUrl(data.path);
+  return urlData.publicUrl;
+}
+
+export async function uploadImageOriginal(file: File, path: string): Promise<string> {
   const ext = file.name.split('.').pop() || 'png';
   const fileName = `${path}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const { error, data } = await supabase.storage.from('images').upload(fileName, file, {
@@ -225,7 +270,7 @@ export async function deleteImage(url: string) {
 // ============================================
 export interface SearchResult {
   id: string;
-  type: 'character' | 'timeline' | 'location' | 'organization' | 'item' | 'storyline' | 'note';
+  type: 'character' | 'timeline' | 'location' | 'organization' | 'item' | 'storyline' | 'illustration' | 'note';
   title: string;
   subtitle: string;
   world_id: string;
@@ -244,6 +289,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     { table: 'organizations', type: 'organization' as const, nameField: 'name', subField: 'type' },
     { table: 'items', type: 'item' as const, nameField: 'name', subField: 'category' },
     { table: 'storylines', type: 'storyline' as const, nameField: 'title', subField: null },
+    { table: 'illustrations', type: 'illustration' as const, nameField: 'name', subField: 'description' },
     { table: 'notes', type: 'note' as const, nameField: null, subField: null },
   ];
 

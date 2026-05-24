@@ -4,10 +4,10 @@ interface Props { world: World }
 
 export default function WorldPreview({ world }: Props) {
   return (
-    <div>
+    <div className="text-center">
       {world.cover_url && (
-        <div className="rounded-lg overflow-hidden mb-4 border border-[rgb(var(--color-border))]">
-          <img src={world.cover_url} alt={world.name} className="w-full max-h-64 object-cover" />
+        <div className="rounded-lg overflow-hidden mb-4 border border-[rgb(var(--color-border))] inline-block">
+          <img src={world.cover_url} alt={world.name} className="max-w-full max-h-64 object-cover" />
         </div>
       )}
       <div className="space-y-3">
@@ -18,7 +18,7 @@ export default function WorldPreview({ world }: Props) {
         {world.description && (
           <div>
             <span className="text-[10px] font-medium text-[rgb(var(--color-text-secondary))] uppercase tracking-wider">简介</span>
-            <p className="text-sm mt-0.5 whitespace-pre-wrap">{world.description}</p>
+            <p className="text-sm mt-0.5 whitespace-pre-wrap">「{world.description}」</p>
           </div>
         )}
         <div>

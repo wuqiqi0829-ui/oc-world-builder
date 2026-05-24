@@ -9,9 +9,10 @@ interface ItemsState {
   create: (data: { world_id: string; name: string; category?: string; description?: string; images?: Item['images']; attributes?: Item['attributes'] }) => Promise<Item>;
   update: (id: string, changes: Partial<Item>) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  reorder: (ids: string[]) => void;
 }
 
-export const useItems = create<ItemsState>((set) => ({
+export const useItems = create<ItemsState>((set, get) => ({
   items: [],
   loading: false,
   fetch: async (worldId) => {
@@ -31,5 +32,12 @@ export const useItems = create<ItemsState>((set) => ({
   remove: async (id) => {
     await itemsApi.delete(id);
     set((st) => ({ items: st.items.filter((i) => i.id !== id) }));
+  },
+
+  reorder: (ids) => {
+    const current = get().items;
+    const reordered = ids.map((id) => current.find((i) => i.id === id)!).filter(Boolean);
+    set({ items: reordered });
+    ids.forEach((id, i) => { itemsApi.update(id, { sort_order: i } as Record<string, unknown>).catch(() => {}); });
   },
 }));
