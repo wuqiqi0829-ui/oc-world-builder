@@ -17,6 +17,7 @@ interface SettingsState {
   clearCustomFont: () => void;
   setThemeColor: (name: ThemeName) => void;
   init: () => void;
+  syncToServer: () => void;
 }
 
 const fontFamilies: Record<string, string> = {
@@ -215,12 +216,12 @@ export const useSettings = create<SettingsState>((set) => ({
   init: async () => {
     try {
       let data: any = null;
+      // Try Supabase first (for cross-device sync from another device)
       try { data = await appDataApi.get(DB_KEY); } catch {}
-      // Migrate localStorage to Supabase if needed
+      // Fallback to localStorage
       if (!data) {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) { try { data = JSON.parse(raw); } catch {} }
-        if (data) saveToDb(); // upload to Supabase for cross-device sync
       }
       const font = data?.font || 'sans';
       const theme: ThemeName = data?.themeColor || 'purple';
@@ -236,7 +237,10 @@ export const useSettings = create<SettingsState>((set) => ({
         applyFont(font);
         set({ font, themeColor: theme, bgImage: bg });
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ font, themeColor: theme, bgImage: bg, customFont: cf }));
     } catch (e) { console.error('Settings init error:', e); }
+  },
+  syncToServer: () => {
+    // Call this after login to upload local settings
+    saveToDb();
   },
 }));

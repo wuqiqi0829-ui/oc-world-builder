@@ -151,8 +151,8 @@ function AuthenticatedApp() {
 
   useEffect(() => { refreshUser(); }, [refreshUser]);
 
-  const { init: initSettings } = useSettings();
-  useEffect(() => { initSettings(); }, [initSettings]);
+  const { init: initSettings, syncToServer } = useSettings();
+  useEffect(() => { initSettings(); syncToServer(); }, [initSettings, syncToServer]);
 
   useEffect(() => {
     fetchWorlds();
