@@ -148,14 +148,19 @@ function AuthenticatedApp() {
       const meta = data.user.user_metadata || {};
       setUserName((meta.display_name as string) || '');
       setUserAvatar((meta.avatar_url as string) || '');
-      // Sync settings to server after auth confirmed
-      syncToServer();
     }
-  }, [syncToServer]);
+  }, []);
 
   useEffect(() => { refreshUser(); }, [refreshUser]);
 
-  useEffect(() => { initSettings(); }, [initSettings]);
+  useEffect(() => {
+    const setup = async () => {
+      await initSettings();
+      // Sync must happen AFTER init loads from localStorage
+      syncToServer();
+    };
+    setup();
+  }, [initSettings, syncToServer]);
 
   useEffect(() => {
     fetchWorlds();
