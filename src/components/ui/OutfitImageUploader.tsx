@@ -107,17 +107,24 @@ export default function OutfitImageUploader({ images, onChange, outfitDescriptio
     const newImages: ImageItem[] = [];
 
     for (const file of Array.from(files)) {
-      if (!file.type.startsWith('image/')) continue;
+      const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.name);
+      if (!isImage && file.type) continue;
       try {
-        const compressed = await imageCompression(file, {
-          maxSizeMB: 0.5,
-          maxWidthOrHeight: 1920,
-          useWebWorker: false,
-        });
-        const url = await uploadImage(compressed, 'images');
+        let toUpload: File = file;
+        try {
+          const compressed = await imageCompression(file, {
+            maxSizeMB: 0.5,
+            maxWidthOrHeight: 1920,
+            useWebWorker: false,
+          });
+          toUpload = compressed instanceof File ? compressed : new File([compressed], file.name, { type: file.type || 'image/png' });
+        } catch {
+          // compression failed, upload original file instead
+        }
+        const url = await uploadImage(toUpload, 'images');
         newImages.push({ url, label: '', order: newImages.length, group, subGroup: subGroup || undefined });
       } catch (e: any) {
-        setUploadError(e?.message || '上传失败');
+        setUploadError('上传失败: ' + (e?.message || e?.error_description || String(e)));
       }
     }
 
