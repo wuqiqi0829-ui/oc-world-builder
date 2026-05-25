@@ -216,9 +216,11 @@ export const useSettings = create<SettingsState>((set) => ({
     try {
       let data: any = null;
       try { data = await appDataApi.get(DB_KEY); } catch {}
+      // Migrate localStorage to Supabase if needed
       if (!data) {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) { try { data = JSON.parse(raw); } catch {} }
+        if (data) saveToDb(); // upload to Supabase for cross-device sync
       }
       const font = data?.font || 'sans';
       const theme: ThemeName = data?.themeColor || 'purple';
