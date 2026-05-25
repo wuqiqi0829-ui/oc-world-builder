@@ -3,16 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="OC世界观收纳整理软件" />
     <meta name="theme-color" content="#7C5CBF" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null" />
     <title>OC World Builder</title>
+    <style>body { font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }</style>
   </head>
   <body class="font-sans antialiased">
-    <div id="root"></div>
+    <div id="root"><div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#7C5CBF;font-size:14px">加载中...</div></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      window.onerror = function(m) {
+        document.getElementById('root').innerHTML = '<div style="padding:40px;text-align:center;color:#666"><h2 style="color:#c44">加载错误</h2><pre style="text-align:left;font-size:12px;white-space:pre-wrap">'+String(m).replace(/</g,'&lt;')+'</pre></div>';
+      };
+    </script>
   </body>
 </html>
