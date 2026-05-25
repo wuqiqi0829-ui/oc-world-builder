@@ -111,7 +111,7 @@ export default function CharacterCard({ character, selected, onClick }: Props) {
                   </button>
                 </div>
                 <div className="relative w-full aspect-video bg-black">
-                  <Cropper image={cropImageSrc} crop={crop} zoom={zoom} aspect={16 / 9} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onCropComplete} crossOrigin="" />
+                  <Cropper image={cropImageSrc} crop={crop} zoom={zoom} aspect={16 / 9} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onCropComplete} />
                 </div>
                 <div className="p-3">
                   <input type="range" min={1} max={5} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="w-full" />
@@ -129,7 +129,7 @@ export default function CharacterCard({ character, selected, onClick }: Props) {
                       key={i}
                       className={clsx('cursor-pointer rounded-lg overflow-hidden border-2 transition-all',
                         bgUrl === (img.url) ? 'border-primary-400 shadow-[0_0_8px_rgb(var(--primary-600)/0.3)]' : 'border-transparent hover:border-[rgb(var(--color-border))]')}
-                      onClick={() => { setCropImageSrc(img.url); setCrop({ x: 0, y: 0 }); setZoom(1); }}
+                      onClick={async () => { const { urlToBlob } = await import('@/lib/imageCrop'); setCropImageSrc(await urlToBlob(img.url)); setCrop({ x: 0, y: 0 }); setZoom(1); }}
                     >
                       <div className="aspect-video bg-[rgb(var(--color-bg))]">
                         <img src={img.url} alt="" className="w-full h-full object-cover" />

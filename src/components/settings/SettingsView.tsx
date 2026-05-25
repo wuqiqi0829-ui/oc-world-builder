@@ -3,7 +3,7 @@ import { useSettings, themePresets } from '@/stores/settings';
 import ImageUploader from '@/components/ui/ImageUploader';
 import type { ImageItem } from '@/lib/database';
 import Cropper, { type Area, type Point } from 'react-easy-crop';
-import { cropAndUpload } from '@/lib/imageCrop';
+import { cropAndUpload, urlToBlob } from '@/lib/imageCrop';
 import { uploadImageOriginal } from '@/lib/db';
 import { Crop, Loader2, Upload, X, Check } from 'lucide-react';
 
@@ -43,8 +43,9 @@ export default function SettingsView() {
     }
   };
 
-  const openCropWith = (url: string) => {
-    setCropImageUrl(url);
+  const openCropWith = async (url: string) => {
+    const blobUrl = await urlToBlob(url);
+    setCropImageUrl(blobUrl);
     setCrop({ x: 0, y: 0 });
     setCropZoom(1);
     setCropPixels(null);
@@ -146,7 +147,7 @@ export default function SettingsView() {
             <div className="flex-1 relative bg-gray-900">
               <Cropper image={cropImageUrl} crop={crop} zoom={cropZoom} aspect={cropAspect}
                 onCropChange={setCrop} onZoomChange={setCropZoom} onCropComplete={handleCropComplete}
-                cropShape="rect" objectFit="contain" crossOrigin="" />
+                cropShape="rect" objectFit="contain" />
             </div>
             <div className="px-5 py-3 border-t border-[rgb(var(--color-border))] flex items-center gap-3">
               <span className="text-xs text-[rgb(var(--color-text-secondary))]">缩放</span>

@@ -3,6 +3,7 @@ import Cropper, { type Area } from 'react-easy-crop';
 import { useIllustrations } from '@/stores/illustrations';
 import type { Illustration } from '@/lib/database';
 import { uploadImageOriginal } from '@/lib/db';
+import { urlToBlob } from '@/lib/imageCrop';
 import { Trash2, Loader2, Upload, X, ZoomIn } from 'lucide-react';
 
 async function cropImage(imageSrc: string, pixelCrop: Area): Promise<Blob> {
@@ -37,7 +38,13 @@ export default function IllustrationEditPanel({ worldId, illustrationId, onClose
 
   const [name, setName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [blobImageUrl, setBlobImageUrl] = useState('');
   const [displayUrl, setDisplayUrl] = useState('');
+
+  useEffect(() => {
+    if (imageUrl) { urlToBlob(imageUrl).then(setBlobImageUrl); }
+    else setBlobImageUrl('');
+  }, [imageUrl]);
   const [uploading, setUploading] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -157,14 +164,13 @@ export default function IllustrationEditPanel({ worldId, illustrationId, onClose
           <div className="space-y-2">
             <div className="relative w-full aspect-[4/3] rounded-card overflow-hidden border border-[rgb(var(--color-border))] bg-black">
               <Cropper
-                image={imageUrl}
+                image={blobImageUrl || imageUrl}
                 crop={crop}
                 zoom={zoom}
                 aspect={4 / 3}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
-                crossOrigin=""
               />
               <button
                 className="absolute top-2 right-2 p-1 rounded-full bg-black/40 text-white hover:bg-red-500 z-10"

@@ -78,9 +78,10 @@ export default function RaceClassEditPanel({ entryId, categoryId, onClose }: Pro
     if (entryId) { await removeEntry(entryId); onClose(); }
   };
 
-  const openCrop = () => {
+  const openCrop = async () => {
     if (images.length > 0) {
-      setCropImageUrl(images[0].url);
+      const { urlToBlob } = await import('@/lib/imageCrop');
+      setCropImageUrl(await urlToBlob(images[0].url));
       setCrop({ x: 0, y: 0 });
       setCropZoom(1);
       setCropPixels(null);
@@ -185,7 +186,6 @@ export default function RaceClassEditPanel({ entryId, categoryId, onClose }: Pro
                 onCropComplete={handleCropComplete}
                 cropShape="rect"
                 objectFit="contain"
-                crossOrigin=""
               />
             </div>
             <div className="px-5 py-3 border-t border-[rgb(var(--color-border))] flex items-center gap-3">
