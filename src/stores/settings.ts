@@ -1,6 +1,8 @@
 import { create } from 'zustand';
+import { appDataApi } from '@/lib/db';
 
 const STORAGE_KEY = 'oc-settings';
+const DB_KEY = 'settings';
 
 type ThemeName = 'purple' | 'blue' | 'pink' | 'green' | 'cyan' | 'rose' | 'yellow' | 'gray';
 
@@ -26,7 +28,6 @@ const fontFamilies: Record<string, string> = {
 
 function applyFont(font: string, customName?: string) {
   const family = font === 'custom' ? `"${customName}", sans-serif` : (fontFamilies[font] || fontFamilies.sans);
-  // Inject style to override everything
   const id = 'oc-font-style';
   const old = document.getElementById(id);
   if (old) old.remove();
@@ -34,7 +35,6 @@ function applyFont(font: string, customName?: string) {
   style.id = id;
   style.textContent = `body,button,input,select,textarea,h1,h2,h3,h4,h5,h6,p,span,div{font-family:${family}!important}`;
   document.head.appendChild(style);
-  // Google Font
   const linkId = 'oc-font-link';
   const oldLink = document.getElementById(linkId);
   if (oldLink) oldLink.remove();
@@ -131,7 +131,6 @@ function applyThemeColors(name: string) {
   for (const [key, val] of Object.entries(colors)) {
     root.style.setProperty(key, val, 'important');
   }
-  // Card surface: blend primary-50 with white
   const p50 = colors['--primary-50'].trim().split(/\s+/).map(Number);
   const surface = p50.map((n: number) => Math.round(n + (255 - n) * 0.4)).join(' ');
   root.style.setProperty('--color-surface', surface, 'important');
@@ -159,7 +158,17 @@ function injectFontFace(name: string, url: string) {
   document.head.appendChild(style);
 }
 
-export const useSettings = create<SettingsState>((set, get) => ({
+function saveToDb() {
+  const s = useSettings.getState();
+  appDataApi.set(DB_KEY, {
+    bgImage: s.bgImage,
+    themeColor: s.themeColor,
+    font: s.font,
+    customFont: s.customFont,
+  }).catch(() => {});
+}
+
+export const useSettings = create<SettingsState>((set) => ({
   font: 'sans',
   bgImage: null,
   customFont: null,
@@ -167,59 +176,65 @@ export const useSettings = create<SettingsState>((set, get) => ({
 
   setThemeColor: (name: ThemeName) => {
     applyThemeColors(name);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...get(), themeColor: name }));
     set({ themeColor: name });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...useSettings.getState() }));
+    saveToDb();
   },
 
   setFont: (font: string) => {
     applyFont(font);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...get(), font }));
     set({ font });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...useSettings.getState() }));
+    saveToDb();
   },
 
   setCustomFont: (name: string, url: string) => {
     injectFontFace(name, url);
     applyFont('custom', name);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...get(), customFont: { name, url }, font: 'custom' }));
     set({ customFont: { name, url }, font: 'custom' });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...useSettings.getState() }));
+    saveToDb();
   },
 
   clearCustomFont: () => {
     const old = document.getElementById('oc-custom-font-face');
     if (old) old.remove();
     applyFont('sans');
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...get(), customFont: null, font: 'sans' }));
     set({ customFont: null, font: 'sans' });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...useSettings.getState() }));
+    saveToDb();
   },
 
   setBgImage: (url: string | null) => {
     applyBgImage(url);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...get(), bgImage: url }));
     set({ bgImage: url });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...useSettings.getState() }));
+    saveToDb();
   },
 
-  init: () => {
+  init: async () => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      let font = 'sans';
-      let theme: ThemeName = 'purple';
-      let cf: { name: string; url: string } | null = null;
-      if (raw) {
-        const data = JSON.parse(raw);
-        if (data.font) font = data.font;
-        if (data.themeColor) theme = data.themeColor;
-        if (data.customFont) cf = data.customFont;
-        if (data.bgImage) { applyBgImage(data.bgImage); set({ bgImage: data.bgImage }); }
+      let data: any = null;
+      try { data = await appDataApi.get(DB_KEY); } catch {}
+      if (!data) {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) { try { data = JSON.parse(raw); } catch {} }
       }
+      const font = data?.font || 'sans';
+      const theme: ThemeName = data?.themeColor || 'purple';
+      const cf = data?.customFont || null;
+      const bg = data?.bgImage || null;
       applyThemeColors(theme);
+      if (bg) applyBgImage(bg);
       if (cf) {
         injectFontFace(cf.name, cf.url);
         applyFont('custom', cf.name);
-        set({ font: 'custom', customFont: cf, themeColor: theme });
+        set({ font: 'custom', customFont: cf, themeColor: theme, bgImage: bg });
       } else {
         applyFont(font);
-        set({ font, themeColor: theme });
+        set({ font, themeColor: theme, bgImage: bg });
       }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ font, themeColor: theme, bgImage: bg, customFont: cf }));
     } catch (e) { console.error('Settings init error:', e); }
   },
 }));
