@@ -140,11 +140,9 @@ function applyThemeColors(name: string) {
   root.style.setProperty('--color-primary', colors['--primary-500'], 'important');
   root.style.setProperty('--color-primary-light', colors['--primary-100'], 'important');
 
-  // Force .card background to match ItemCard (primary-50 at 25% opacity)
   const styleId = 'oc-card-style';
   const old = document.getElementById(styleId);
   if (old) old.remove();
-  const p50hex = '#' + p50.map((n: number) => n.toString(16).padStart(2, '0')).join('');
   const style = document.createElement('style');
   style.id = styleId;
   style.textContent = `.card{background-color:rgb(${colors['--primary-100']}/0.35)!important}`;
