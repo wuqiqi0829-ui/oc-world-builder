@@ -92,7 +92,7 @@ export default function NewWorldModal({ open, onClose, onSave, onDelete, initial
             </div>
           ) : (
             <label className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-[rgb(var(--color-border))] rounded-card cursor-pointer hover:border-primary-400 transition-colors relative">
-              <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleCoverUpload} />
+              <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={handleCoverUpload} />
               {uploading ? (
                 <Loader2 size={24} className="animate-spin text-primary-500" />
               ) : (

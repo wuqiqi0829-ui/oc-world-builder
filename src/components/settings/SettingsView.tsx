@@ -107,7 +107,7 @@ export default function SettingsView() {
         </select>
         <div className="flex items-center gap-2">
           <button className="btn-ghost text-xs flex items-center gap-1 relative" disabled={uploadingFont}>
-            <input ref={fontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFontUpload} />
+            <input ref={fontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={handleFontUpload} />
             {uploadingFont ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
             导入字体文件
           </button>
