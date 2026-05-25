@@ -77,7 +77,7 @@ export default function ImageUploader({ images, onChange, maxImages }: Props) {
         const compressed = await imageCompression(file, {
           maxSizeMB: 0.5,
           maxWidthOrHeight: 1920,
-          useWebWorker: true,
+          useWebWorker: false,
         });
         const url = await uploadImage(compressed, 'images');
         newImages.push({ url, label: '', order: images.length + newImages.length });

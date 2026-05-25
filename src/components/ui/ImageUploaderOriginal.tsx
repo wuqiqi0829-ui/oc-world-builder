@@ -144,9 +144,8 @@ export default function ImageUploaderOriginal({ images, onChange }: Props) {
         ref={dropZoneRef}
         className={clsx(
           'border-2 border-dashed border-[rgb(var(--color-border))] rounded-card p-6 text-center transition-colors',
-          'hover:border-primary-400 cursor-pointer'
+          'hover:border-primary-400 cursor-pointer relative'
         )}
-        onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-primary-500'); }}
         onDragLeave={(e) => { e.currentTarget.classList.remove('border-primary-500'); }}
         onDrop={(e) => {
@@ -155,27 +154,27 @@ export default function ImageUploaderOriginal({ images, onChange }: Props) {
           if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
         }}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={(e) => e.target.files && handleFiles(e.target.files)}
-        />
         {uploading ? (
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 pointer-events-none">
             <Loader2 size={24} className="animate-spin text-primary-500" />
             <span className="text-xs text-[rgb(var(--color-text-secondary))]">上传中...</span>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-1 pointer-events-none">
             <Upload size={24} className="text-[rgb(var(--color-text-secondary))]" />
             <span className="text-xs text-[rgb(var(--color-text-secondary))]">
               点击上传 / 拖拽图片 / Ctrl+V 粘贴
             </span>
           </div>
         )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          onChange={(e) => e.target.files && handleFiles(e.target.files)}
+        />
       </div>
 
       {lightboxIndex !== null && (
