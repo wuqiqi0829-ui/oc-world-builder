@@ -7,7 +7,8 @@ import 'reactflow/dist/style.css';
 import { useRelationships } from '@/stores/relationships';
 import type { Character, Relationship } from '@/lib/database';
 import { parseLabel } from '@/lib/labelUtils';
-import { Plus, X } from 'lucide-react';
+import { appDataApi } from '@/lib/db';
+import { Plus, X, PanelLeft, PanelRight } from 'lucide-react';
 import CharacterNode from './CharacterNode';
 import ParallelEdge from './ParallelEdge';
 import RelationshipList from './RelationshipList';
@@ -31,27 +32,44 @@ interface Props {
 
 const POS_KEY = 'oco-graph-positions';
 
-function loadPositions(worldId: string): Record<string, { x: number; y: number }> {
+async function loadPositions(worldId: string): Promise<Record<string, { x: number; y: number }>> {
+  try {
+    const data = await appDataApi.get(`graph-${worldId}`);
+    if (data?.positions) return data.positions;
+  } catch {}
+  // Fallback to localStorage, and sync to DB
   try {
     const raw = localStorage.getItem(`${POS_KEY}-${worldId}`);
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
+    if (raw) {
+      const pos = JSON.parse(raw);
+      // Upload to DB so shared viewers can see the same layout
+      appDataApi.set(`graph-${worldId}`, { positions: pos }).catch(() => {});
+      return pos;
+    }
+  } catch {}
+  return {};
 }
 
-function savePositions(worldId: string, pos: Record<string, { x: number; y: number }>) {
+async function savePositions(worldId: string, pos: Record<string, { x: number; y: number }>) {
   try { localStorage.setItem(`${POS_KEY}-${worldId}`, JSON.stringify(pos)); } catch {}
+  try { await appDataApi.set(`graph-${worldId}`, { positions: pos }); } catch {}
 }
 
 export default function RelationshipGraph({ worldId, characters, onCreateNew, onPreview, onEdit, onDeleteRelation }: Props) {
   const { relationships } = useRelationships();
   const [importOpen, setImportOpen] = useState(false);
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
+  const [listCollapsed, setListCollapsed] = useState(true);
   const connectingRef = useRef<string | null>(null);
   useEffect(() => { connectingRef.current = connectingFrom; }, [connectingFrom]);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const graphRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef({ x: 0, y: 0, zoom: 1 });
-  const savedPositions = useMemo(() => loadPositions(worldId), [worldId]);
+  const [savedPositions, setSavedPositions] = useState<Record<string, { x: number; y: number }>>({});
+
+  useEffect(() => {
+    loadPositions(worldId).then(setSavedPositions);
+  }, [worldId]);
 
   const characterMap = useMemo(() => {
     const map: Record<string, Character> = {};
@@ -161,7 +179,7 @@ export default function RelationshipGraph({ worldId, characters, onCreateNew, on
     }
 
     return { initialNodes: nodes, initialEdges: edges };
-  }, [relationships, characterMap, allNodeIds]);
+  }, [relationships, characterMap, allNodeIds, savedPositions]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -242,6 +260,13 @@ export default function RelationshipGraph({ worldId, characters, onCreateNew, on
         <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between">
           <h3 className="text-sm font-medium bg-[rgb(var(--color-surface))] px-2 py-0.5 rounded">关系图谱</h3>
           <div className="flex items-center gap-2">
+            <button
+              className="btn-ghost text-xs !px-1.5 !py-1"
+              onClick={() => setListCollapsed(!listCollapsed)}
+              title={listCollapsed ? '展开关系列表' : '收起关系列表'}
+            >
+              {listCollapsed ? <PanelLeft size={12} /> : <PanelRight size={12} />}
+            </button>
             <button className="btn-primary text-xs flex items-center gap-1" onClick={() => setImportOpen(true)}>
               <Plus size={12} /> 导入人物
             </button>
@@ -282,7 +307,8 @@ export default function RelationshipGraph({ worldId, characters, onCreateNew, on
           <Controls />
           <MiniMap
             nodeColor={() => '#7C5CBF'}
-            style={{ backgroundColor: '#fff' }}
+            style={{ backgroundColor: '#fff', width: 100, height: 70 }}
+            maskColor="rgba(0,0,0,0.1)"
           />
         </ReactFlow>
 
@@ -304,12 +330,14 @@ export default function RelationshipGraph({ worldId, characters, onCreateNew, on
         </div>
       </div>
 
-      <RelationshipList
-        relationships={relationships.filter((r) => r.source_type === 'character' && r.target_type === 'character')}
-        characterNames={characterNames}
-        onEdit={onEdit}
-        onDelete={onDeleteRelation}
-      />
+      <div className={`${listCollapsed ? 'hidden' : 'w-[260px]'} flex-shrink-0`}>
+        <RelationshipList
+          relationships={relationships.filter((r) => r.source_type === 'character' && r.target_type === 'character')}
+          characterNames={characterNames}
+          onEdit={onEdit}
+          onDelete={onDeleteRelation}
+        />
+      </div>
 
       {/* 导入人物弹窗 */}
       {importOpen && (

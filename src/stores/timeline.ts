@@ -1,34 +1,56 @@
 import { create } from 'zustand';
-import { timelineApi } from '@/lib/db';
+import { timelineApi, appDataApi } from '@/lib/db';
 import type { TimelineEvent, Timeline } from '@/lib/database';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
-// localStorage keys
+// localStorage keys (kept as backup)
 const TL_LIST_KEY = 'oc-timeline-list';
 const TL_EVENT_MAP_KEY = 'oc-timeline-event-map';
 
 interface LocalTimeline { id: string; world_id: string; name: string; parent_id?: string; sort_order: number; }
 
-function loadLocalTimelines(worldId: string): LocalTimeline[] {
+async function loadLocalTimelines(worldId: string): Promise<LocalTimeline[]> {
+  try {
+    const data = await appDataApi.get(`${TL_LIST_KEY}-${worldId}`);
+    if (data?.timelines) return data.timelines;
+  } catch {}
   try {
     const raw = localStorage.getItem(TL_LIST_KEY + '-' + worldId);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+    if (raw) {
+      const tls = JSON.parse(raw);
+      // Auto-sync localStorage → DB
+      appDataApi.set(`${TL_LIST_KEY}-${worldId}`, { timelines: tls }).catch(() => {});
+      return tls;
+    }
+  } catch {}
+  return [];
 }
 
-function saveLocalTimelines(worldId: string, tls: LocalTimeline[]) {
+async function saveLocalTimelines(worldId: string, tls: LocalTimeline[]) {
   localStorage.setItem(TL_LIST_KEY + '-' + worldId, JSON.stringify(tls));
+  try { await appDataApi.set(`${TL_LIST_KEY}-${worldId}`, { timelines: tls }); } catch {}
 }
 
-function loadEventTimelineMap(): Record<string, string> {
+async function loadEventTimelineMap(): Promise<Record<string, string>> {
+  try {
+    const data = await appDataApi.get(TL_EVENT_MAP_KEY);
+    if (data?.map) return data.map;
+  } catch {}
   try {
     const raw = localStorage.getItem(TL_EVENT_MAP_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
+    if (raw) {
+      const map = JSON.parse(raw);
+      // Auto-sync localStorage → DB
+      appDataApi.set(TL_EVENT_MAP_KEY, { map }).catch(() => {});
+      return map;
+    }
+  } catch {}
+  return {};
 }
 
-function saveEventTimelineMap(map: Record<string, string>) {
+async function saveEventTimelineMap(map: Record<string, string>) {
   localStorage.setItem(TL_EVENT_MAP_KEY, JSON.stringify(map));
+  try { await appDataApi.set(TL_EVENT_MAP_KEY, { map }); } catch {}
 }
 
 function uuid() { return 'tl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9); }
@@ -98,7 +120,7 @@ export const useTimeline = create<TimelineState>((set, get) => ({
     const { compareTimelineIds, timelines } = get();
     if (!compareTimelineIds.length || !worldId) return;
     const allEvents = await timelineApi.list(worldId);
-    const eventMap = loadEventTimelineMap();
+    const eventMap = await loadEventTimelineMap();
     const map: Record<string, TimelineEvent[]> = {};
     for (const tlId of compareTimelineIds) {
       map[tlId] = allEvents.filter(e => {
@@ -111,11 +133,11 @@ export const useTimeline = create<TimelineState>((set, get) => ({
   },
 
   fetchTimelines: async (worldId) => {
-    let localTLs = loadLocalTimelines(worldId);
+    let localTLs = await loadLocalTimelines(worldId);
     if (localTLs.length === 0) {
       const defaultTL: LocalTimeline = { id: uuid(), world_id: worldId, name: '主线', sort_order: 0 };
       localTLs = [defaultTL];
-      saveLocalTimelines(worldId, localTLs);
+      await saveLocalTimelines(worldId, localTLs);
     }
     const timelines = localTLs.map(localToTimeline);
     set({ timelines });
@@ -129,10 +151,10 @@ export const useTimeline = create<TimelineState>((set, get) => ({
 
   createTimeline: async (data, switchTo) => {
     const worldId = data.world_id;
-    const localTLs = loadLocalTimelines(worldId);
+    const localTLs = await loadLocalTimelines(worldId);
     const newTL: LocalTimeline = { id: uuid(), world_id: worldId, name: data.name, parent_id: data.parent_id, sort_order: localTLs.length };
     localTLs.push(newTL);
-    saveLocalTimelines(worldId, localTLs);
+    await saveLocalTimelines(worldId, localTLs);
     const tl = localToTimeline(newTL);
     set(s => ({ timelines: [...s.timelines, tl], ...(switchTo !== false ? { activeTimelineId: tl.id, parentTimelineId: tl.parent_id || null, loading: true } : {}) }));
     if (switchTo !== false) localStorage.setItem('oc-active-timeline', tl.id);
@@ -142,9 +164,10 @@ export const useTimeline = create<TimelineState>((set, get) => ({
   removeTimeline: async (id) => {
     const worldId = get().timelines.find(t => t.id === id)?.world_id;
     if (worldId) {
-      const localTLs = loadLocalTimelines(worldId).filter(t => t.id !== id);
+      const allTls = await loadLocalTimelines(worldId);
+      const localTLs = allTls.filter(t => t.id !== id);
       const idsToRemove = new Set([id, ...localTLs.filter(t => t.parent_id === id).map(t => t.id)]);
-      saveLocalTimelines(worldId, localTLs.filter(t => !idsToRemove.has(t.id)));
+      await saveLocalTimelines(worldId, localTLs.filter(t => !idsToRemove.has(t.id)));
     }
     set(s => {
       const remaining = s.timelines.filter(t => t.id !== id && t.parent_id !== id);
@@ -158,13 +181,13 @@ export const useTimeline = create<TimelineState>((set, get) => ({
     });
   },
 
-  renameTimeline: (id, name) => {
+  renameTimeline: async (id, name) => {
     set(s => ({ timelines: s.timelines.map(t => t.id === id ? { ...t, name } : t) }));
     const tl = get().timelines.find(t => t.id === id);
     if (tl) {
-      const localTLs = loadLocalTimelines(tl.world_id);
+      const localTLs = await loadLocalTimelines(tl.world_id);
       const idx = localTLs.findIndex(t => t.id === id);
-      if (idx >= 0) { localTLs[idx].name = name; saveLocalTimelines(tl.world_id, localTLs); }
+      if (idx >= 0) { localTLs[idx].name = name; await saveLocalTimelines(tl.world_id, localTLs); }
     }
   },
 
@@ -173,7 +196,7 @@ export const useTimeline = create<TimelineState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const allEvents = await timelineApi.list(worldId);
-      const eventMap = loadEventTimelineMap();
+      const eventMap = await loadEventTimelineMap();
       const activeId = get().activeTimelineId;
       const filtered = allEvents.filter(e => {
         const tlId = eventMap[e.id];
@@ -194,9 +217,9 @@ export const useTimeline = create<TimelineState>((set, get) => ({
     delete cleanData.timeline_id;
     const event = await timelineApi.create(cleanData) as TimelineEvent;
     if (tlId) {
-      const eventMap = loadEventTimelineMap();
+      const eventMap = await loadEventTimelineMap();
       eventMap[event.id] = tlId;
-      saveEventTimelineMap(eventMap);
+      await saveEventTimelineMap(eventMap);
       event.timeline_id = tlId;
     }
     set((s) => ({ events: [...s.events, event] }));
@@ -221,9 +244,9 @@ export const useTimeline = create<TimelineState>((set, get) => ({
 
   remove: async (id) => {
     await timelineApi.delete(id);
-    const eventMap = loadEventTimelineMap();
+    const eventMap = await loadEventTimelineMap();
     delete eventMap[id];
-    saveEventTimelineMap(eventMap);
+    await saveEventTimelineMap(eventMap);
     set((s) => {
       const newCompareMap = { ...s.compareEventsMap };
       for (const tlId of Object.keys(newCompareMap)) {

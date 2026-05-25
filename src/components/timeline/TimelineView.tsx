@@ -34,7 +34,7 @@ function TimelineCard({ event, onPreview, onEdit, isLeft, showHandle, dragProps,
         <button
           {...dragProps.attributes}
           {...dragProps.listeners}
-          className={clsx('absolute top-1/2 -translate-y-1/2 z-10 cursor-grab active:cursor-grabbing text-gray-400 hover:text-primary-500 transition-colors', isLeft ? '-right-7' : '-left-7')}
+          className={clsx('absolute top-1/2 -translate-y-1/2 z-10 cursor-grab active:cursor-grabbing text-gray-400 hover:text-primary-500 transition-colors touch-none', isLeft ? '-right-7' : '-left-7')}
         >
           <GripVertical size={14} />
         </button>
@@ -71,10 +71,9 @@ function TimelineNode({ event, onPreview, onEdit, showHandle, onFlip, onCreateSu
 
   return (
     <div ref={setNodeRef} style={style} className={clsx('relative', isDragging && 'opacity-50')}>
-      {/* Desktop: alternating double-column */}
-      <div className="hidden lg:grid grid-cols-[1fr_auto_1fr] items-start relative min-h-[80px]">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-start relative">
         {/* Left side */}
-        <div className="flex justify-end pr-12">
+        <div className="flex justify-end pr-2 sm:pr-6 lg:pr-12">
           {isLeft && <TimelineCard event={event} onPreview={onPreview} onEdit={onEdit} isLeft={true} showHandle={showHandle} dragProps={{ attributes, listeners }} onFlip={onFlip} />}
         </div>
 
@@ -91,21 +90,8 @@ function TimelineNode({ event, onPreview, onEdit, showHandle, onFlip, onCreateSu
         </div>
 
         {/* Right side */}
-        <div className="flex pl-12">
+        <div className="flex pl-2 sm:pl-6 lg:pl-12">
           {!isLeft && <TimelineCard event={event} onPreview={onPreview} onEdit={onEdit} isLeft={false} showHandle={showHandle} dragProps={{ attributes, listeners }} onFlip={onFlip} />}
-        </div>
-      </div>
-
-      {/* Mobile: single column */}
-      <div className="lg:hidden flex items-start gap-1 pl-6 relative">
-        <div className="absolute left-0 top-4 flex flex-col items-center">
-          <div className="w-2.5 h-2.5 rounded-full bg-primary-300 border-2 border-white dark:border-gray-800 shadow-sm" />
-        </div>
-        <div className="flex-1 ml-3">
-          {event.time_label && (
-            <div className="text-[11px] text-primary-500 font-mono mb-1">{event.time_label}</div>
-          )}
-          <TimelineCard event={event} onPreview={onPreview} onEdit={onEdit} isLeft={false} showHandle={showHandle} dragProps={{ attributes, listeners }} onFlip={onFlip} />
         </div>
       </div>
     </div>
@@ -177,10 +163,7 @@ export default function TimelineView({ events, onCreate, onCreateSubTimeline, on
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sorted.map((e) => e.id)} strategy={verticalListSortingStrategy}>
             <div className="relative">
-              {/* Center vertical line - desktop */}
-              <div className="hidden lg:block absolute left-1/2 top-4 bottom-4 w-px bg-gray-300 dark:bg-gray-600 -translate-x-1/2" />
-              {/* Left vertical line - mobile */}
-              <div className="lg:hidden absolute left-[7px] top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-700" />
+              <div className="absolute left-1/2 top-4 bottom-4 w-px bg-gray-300 dark:bg-gray-600 -translate-x-1/2" />
 
               <div className="space-y-6 lg:space-y-8">
                 {sorted.map((event) => (

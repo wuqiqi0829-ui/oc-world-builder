@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTimeline } from '@/stores/timeline';
+import { useReadOnly } from '@/contexts/ReadOnlyContext';
 import { Plus, Trash2, Clock, Columns2, ChevronDown, ChevronRight, PanelLeftClose, PanelLeft } from 'lucide-react';
 import clsx from 'clsx';
 
-function TimelineItem({ tl, activeId, onSelect, onDelete, onRename, onCompare, isParent, hasChildren, childrenExpanded, onToggleChildren, selected }: {
+function TimelineItem({ tl, activeId, onSelect, onDelete, onRename, onCompare, isParent, hasChildren, childrenExpanded, onToggleChildren, selected, readOnly }: {
   tl: { id: string; name: string };
   activeId: string | null;
   onSelect: () => void;
@@ -15,6 +16,7 @@ function TimelineItem({ tl, activeId, onSelect, onDelete, onRename, onCompare, i
   childrenExpanded?: boolean;
   onToggleChildren?: () => void;
   selected?: boolean;
+  readOnly?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(tl.name);
@@ -68,7 +70,7 @@ function TimelineItem({ tl, activeId, onSelect, onDelete, onRename, onCompare, i
           <span className="truncate">{tl.name}</span>
         </button>
       )}
-      <button
+      {!readOnly && <button
         className={clsx(
           'p-0.5 rounded transition-colors',
           selected
@@ -79,14 +81,14 @@ function TimelineItem({ tl, activeId, onSelect, onDelete, onRename, onCompare, i
         title={selected ? '取消对比' : '加入对比'}
       >
         <Columns2 size={10} />
-      </button>
-      <button
+      </button>}
+      {!readOnly && <button
         className="p-0.5 rounded text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20"
         onClick={onDelete}
         title="删除"
       >
         <Trash2 size={10} />
-      </button>
+      </button>}
     </div>
   );
 }
@@ -101,6 +103,7 @@ interface Props {
 
 export default function TimelineList({ worldId, compareIds, onToggleCompare, onStartCompare, inCompare }: Props) {
   const { timelines, activeTimelineId, setActiveTimeline, fetchTimelines, createTimeline, removeTimeline, renameTimeline } = useTimeline();
+  const readOnly = useReadOnly();
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
   const [collapsed, setCollapsed] = useState(false);
@@ -146,9 +149,9 @@ export default function TimelineList({ worldId, compareIds, onToggleCompare, onS
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xs font-medium text-[rgb(var(--color-text-secondary))]">时间轴</h3>
         <div className="flex items-center gap-0.5">
-          <button className="btn-ghost text-xs !px-1.5 !py-0.5" onClick={() => setShowNew(true)}>
+          {!readOnly && <button className="btn-ghost text-xs !px-1.5 !py-0.5" onClick={() => setShowNew(true)}>
             <Plus size={12} />
-          </button>
+          </button>}
           <button
             className="p-0.5 rounded text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text))]"
             onClick={() => setCollapsed(true)}
@@ -177,6 +180,7 @@ export default function TimelineList({ worldId, compareIds, onToggleCompare, onS
                 childrenExpanded={!isCollapsed}
                 onToggleChildren={() => toggleParent(root.id)}
                 selected={compareIds.includes(root.id)}
+                readOnly={readOnly}
               />
               {!isCollapsed && children.length > 0 && (
                 <div className="ml-3 pl-3 border-l border-primary-200 dark:border-primary-800/50 space-y-0.5">
@@ -190,6 +194,7 @@ export default function TimelineList({ worldId, compareIds, onToggleCompare, onS
                       onRename={(name) => renameTimeline(child.id, name)}
                       onCompare={() => onToggleCompare(child.id)}
                       selected={compareIds.includes(child.id)}
+                      readOnly={readOnly}
                     />
                   ))}
                 </div>

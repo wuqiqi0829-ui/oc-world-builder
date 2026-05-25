@@ -1,5 +1,6 @@
 import type { Relationship } from '@/lib/database';
 import { parseLabel } from '@/lib/labelUtils';
+import { useReadOnly } from '@/contexts/ReadOnlyContext';
 import { Trash2 } from 'lucide-react';
 
 const relationLabels: Record<string, string> = {
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function RelationshipList({ relationships, characterNames, onEdit, onDelete }: Props) {
+  const readOnly = useReadOnly();
   return (
     <div className="w-[260px] flex-shrink-0 border-l border-[rgb(var(--color-border))] flex flex-col bg-[rgb(var(--color-bg))] dark:bg-gray-800">
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
@@ -46,12 +48,14 @@ export default function RelationshipList({ relationships, characterNames, onEdit
                 <div className="text-[10px] text-[rgb(var(--color-text-secondary))] ml-4 truncate">
                   {typeLabel}{opinion ? ` · ${opinion}` : ''}
                 </div>
+                {!readOnly && (
                 <button
                   className="absolute right-2 top-2 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-[rgb(var(--color-text-secondary))] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => { e.stopPropagation(); onDelete(rel.id); }}
                 >
                   <Trash2 size={11} />
                 </button>
+                )}
               </div>
             );
           })

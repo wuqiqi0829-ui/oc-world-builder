@@ -17,8 +17,8 @@ export default function TableCard({ table, allChars, onClick, onPreviewImage, sh
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   const linkedNames = table.linked_characters
-    ?.map((id) => allChars.find((c) => c.id === id)?.name || id)
-    .filter(Boolean) || [];
+    ?.map((id) => allChars.find((c) => c.id === id)?.name)
+    .filter((n): n is string => !!n) || [];
 
   const imageUrl = table.images?.[0]?.url;
 
@@ -55,7 +55,7 @@ export default function TableCard({ table, allChars, onClick, onPreviewImage, sh
         </div>
         {showHandle && (
           <button {...attributes} {...listeners}
-            className="absolute top-1 left-1 p-1 rounded bg-white/70 backdrop-blur-sm text-primary-400 border border-white/50 shadow-sm cursor-grab active:cursor-grabbing"
+            className="absolute top-1 left-1 p-1 rounded bg-white/70 backdrop-blur-sm text-primary-400 border border-white/50 shadow-sm cursor-grab active:cursor-grabbing touch-none"
             onClick={(e) => e.stopPropagation()}
           >
             <GripVertical size={12} />

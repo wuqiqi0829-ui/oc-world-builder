@@ -51,7 +51,7 @@ function SortableImageCard({ ill, onEdit, onPreviewImage, showHandle }: {
           <button
             {...attributes}
             {...listeners}
-            className="absolute top-2 left-2 p-1 rounded bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+            className="absolute top-2 left-2 p-1 rounded bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
             onClick={(e) => e.stopPropagation()}
           >
             <GripVertical size={14} />

@@ -156,11 +156,11 @@ export default function StorylineList({ worldId, onPreviewChapter, onAddChapter,
             <InlineEdit value={activeBook?.name || '主线剧情'} onSave={(v) => { if (activeBookId) useBooks.getState().renameBook(activeBookId, v); }} className="text-base font-semibold" />
           </div>
           <div className="flex items-center gap-2 group/header">
-            <button className="btn-primary text-xs flex items-center gap-1" onClick={onCreate}>
-              <Plus size={12} /> 新建卷
+            <button className="btn-primary text-xs flex items-center gap-1 !px-2 sm:!px-3" onClick={onCreate}>
+              <Plus size={12} /> <span className="hidden sm:inline">新建卷</span>
             </button>
-            <button className="btn-primary text-xs flex items-center gap-1" onClick={onCreateBook}>
-              <Plus size={12} /> 新建故事线
+            <button className="btn-primary text-xs flex items-center gap-1 !px-2 sm:!px-3" onClick={onCreateBook}>
+              <Plus size={12} /> <span className="hidden sm:inline">新建故事线</span>
             </button>
             <button className="btn-ghost text-xs !px-2 !py-1 flex items-center gap-1 text-red-400" onClick={() => {
                 if (confirm(`确定删除「${activeBook?.name}」及其所有卷？`)) {
@@ -213,18 +213,25 @@ export default function StorylineList({ worldId, onPreviewChapter, onAddChapter,
                   <div className="space-y-1.5">
                     {vol.chapters.map((ch, chIdx) => (
                       <Card key={ch.id} hover padding="sm" onClick={() => onPreviewChapter(sl.id, vol.id, ch.id)} className="group bg-white/70 dark:bg-gray-800/60">
-                        <div className="flex items-center gap-0 min-w-0">
+                        {/* Desktop: horizontal row */}
+                        <div className="hidden lg:flex items-center gap-0 min-w-0">
                           <div className="flex items-center gap-0 flex-shrink-0 w-64">
                             <span className="text-xs font-medium w-14 text-center flex-shrink-0">第{chIdx + 1}章</span>
                             <span className="text-[rgb(var(--color-border))] mx-5 flex-shrink-0">|</span>
-                            <span className="text-xs font-medium text-center flex-1 min-w-0">{ch.title || '(未命名)'}</span>
+                            <span className="text-xs font-medium text-center flex-1 min-w-0 truncate">{ch.title || '(未命名)'}</span>
                             <span className="text-[rgb(var(--color-border))] mx-5 flex-shrink-0">|</span>
                           </div>
-                          <span className="text-xs text-[rgb(var(--color-text-secondary))] flex-1 min-w-0 text-center">{ch.brief || ''}</span>
+                          <span className="text-xs text-[rgb(var(--color-text-secondary))] flex-1 min-w-0 text-center truncate">{ch.brief || ''}</span>
                           <span className="text-[rgb(var(--color-border))] mx-5 flex-shrink-0">|</span>
                           <span className="text-[10px] text-[rgb(var(--color-text-secondary))] w-14 text-center flex-shrink-0">{ch.content?.length.toLocaleString() || 0}字</span>
                           <span className="text-[rgb(var(--color-border))] mx-5 flex-shrink-0">|</span>
                           <span className="text-[10px] text-[rgb(var(--color-text-secondary))] w-20 text-center flex-shrink-0">{ch.created_at ? new Date(ch.created_at).toLocaleDateString('zh-CN') : '-'}</span>
+                        </div>
+                        {/* Mobile: 3 rows */}
+                        <div className="lg:hidden space-y-1 text-center">
+                          <div className="text-xs font-medium">第{chIdx + 1}章 {ch.title || '(未命名)'}</div>
+                          {ch.brief && <div className="text-xs text-[rgb(var(--color-text-secondary))]">「{ch.brief}」</div>}
+                          <div className="text-[10px] text-[rgb(var(--color-text-secondary))]">{ch.content?.length.toLocaleString() || 0}字 · {ch.created_at ? new Date(ch.created_at).toLocaleDateString('zh-CN') : '-'}</div>
                         </div>
                       </Card>
                     ))}

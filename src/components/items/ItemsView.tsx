@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useItems } from '@/stores/items';
+import { useReadOnly } from '@/contexts/ReadOnlyContext';
 import EmptyState from '@/components/ui/EmptyState';
 import ItemCard from './ItemCard';
 import { Package, Plus, EyeOff } from 'lucide-react';
@@ -17,6 +18,7 @@ interface Props {
 
 export default function ItemsView({ worldId, onPreview, onCreate }: Props) {
   const { items, fetch, reorder } = useItems();
+  const readOnly = useReadOnly();
   const [showHandle, setShowHandle] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -39,12 +41,12 @@ export default function ItemsView({ worldId, onPreview, onCreate }: Props) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">物品图鉴 ({items.length})</h3>
         <div className="flex items-center gap-2">
-          <button className="btn-ghost text-xs flex items-center gap-1" onClick={() => setShowHandle(!showHandle)} title={showHandle ? '隐藏拖拽' : '调整顺序'}>
+          {!readOnly && <button className="btn-ghost text-xs flex items-center gap-1" onClick={() => setShowHandle(!showHandle)} title={showHandle ? '隐藏拖拽' : '调整顺序'}>
             <EyeOff size={14} className={showHandle ? '' : 'text-primary-500'} />
-          </button>
-          <button className="btn-primary text-xs flex items-center gap-1" onClick={onCreate}>
+          </button>}
+          {!readOnly && <button className="btn-primary text-xs flex items-center gap-1" onClick={onCreate}>
             <Plus size={12} /> 新建物品
-          </button>
+          </button>}
         </div>
       </div>
 

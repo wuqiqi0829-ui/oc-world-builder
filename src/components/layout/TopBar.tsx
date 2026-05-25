@@ -60,7 +60,7 @@ export default function TopBar({ onExport, onImport, onSelectSearchResult, userE
   };
 
   return (
-    <header className="h-14 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] flex items-center gap-4 px-4 flex-shrink-0">
+    <header className="h-14 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] flex items-center gap-4 px-4 flex-shrink-0 pt-[env(safe-area-inset-top,0px)]">
       <h1
         className="text-base font-semibold text-primary-600 whitespace-nowrap hidden md:block min-w-[80px] max-w-[160px] truncate flex-shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
         onClick={() => {

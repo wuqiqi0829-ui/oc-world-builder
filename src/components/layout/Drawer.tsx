@@ -20,7 +20,7 @@ export default function Drawer({ open, onClose, title, children }: DrawerProps) 
       )}
       <aside
         className={clsx(
-          'fixed right-0 top-0 h-full z-50 bg-[rgb(var(--color-surface))] border-l border-[rgb(var(--color-border))] w-full sm:w-96 shadow-xl transition-transform duration-200',
+          'fixed right-0 top-0 h-full z-50 bg-[rgb(var(--color-surface))] border-l border-[rgb(var(--color-border))] w-full sm:w-96 shadow-xl transition-transform duration-200 pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]',
           open ? 'translate-x-0' : 'translate-x-full'
         )}
       >

@@ -277,6 +277,26 @@ export interface SearchResult {
   world_name: string;
 }
 
+// ============================================
+// 分享链接
+// ============================================
+export const shareApi = {
+  enable: async (): Promise<string> => {
+    const data = await appDataApi.get('share-token');
+    const token = data?.token || crypto.randomUUID();
+    await appDataApi.set('share-token', { token, enabled: true });
+    return token;
+  },
+  disable: async () => {
+    await appDataApi.set('share-token', { token: '', enabled: false });
+  },
+  getByToken: async (token: string) => {
+    const data = await appDataApi.get('share-token');
+    if (!data?.enabled || data.token !== token) return null;
+    return { valid: true };
+  },
+};
+
 export async function globalSearch(query: string): Promise<SearchResult[]> {
   if (!query.trim() || query.trim().length < 1) return [];
   const pattern = `%${query.trim()}%`;
@@ -328,4 +348,41 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   }
 
   return results;
+}
+
+// ============================================
+// App Data — cross-device key-value sync
+// ============================================
+export const appDataApi = {
+  get: async (key: string): Promise<any | null> => {
+    const { data, error } = await supabase.from('app_data').select('value').eq('key', key).single();
+    if (error) return null;
+    return data?.value || null;
+  },
+  set: async (key: string, value: any) => {
+    const userId = await getUserId();
+    const { error } = await supabase.from('app_data').upsert({ key, value, user_id: userId, updated_at: new Date().toISOString() }, { onConflict: 'key,user_id' });
+    if (error) throw error;
+  },
+  remove: async (key: string) => {
+    const { error } = await supabase.from('app_data').delete().eq('key', key);
+    if (error && error.code !== 'PGRST116') throw error;
+  },
+};
+
+// Initialize app_data table and migrate localStorage data to DB
+export async function initAppData() {
+  // Try to create the table (will fail silently if already exists via RLS)
+  try {
+    await supabase.from('app_data').select('key').limit(1);
+  } catch {
+    // Table doesn't exist, try to create it
+    try {
+      await supabase.rpc('create_app_data_table' as any).select();
+    } catch {
+      // RPC may not exist — table will need manual creation via migration
+      console.warn('app_data table not found. Run supabase migration: 20260525_app_data.sql');
+      return;
+    }
+  }
 }

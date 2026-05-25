@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { locationsApi } from '@/lib/db';
+import { locationsApi, appDataApi } from '@/lib/db';
 import type { Location } from '@/lib/database';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -21,12 +21,18 @@ export const useLocations = create<LocationsState>((set, get) => ({
   loading: false,
   mapImageUrl: '',
 
-  setMapImageUrl: (url, worldId?: string) => {
+  setMapImageUrl: async (url, worldId?: string) => {
     set({ mapImageUrl: url });
     const wid = worldId || get().locations[0]?.world_id;
     if (wid) {
+      // Always save to localStorage
       if (url) localStorage.setItem(`oc-map-${wid}`, url);
       else localStorage.removeItem(`oc-map-${wid}`);
+      // Try DB sync
+      try {
+        if (url) await appDataApi.set(`map-${wid}`, { url });
+        else await appDataApi.remove(`map-${wid}`);
+      } catch { /* DB not available, localStorage is sufficient */ }
     }
   },
 
@@ -34,7 +40,15 @@ export const useLocations = create<LocationsState>((set, get) => ({
     set({ loading: true });
     try {
       const locations = await locationsApi.list(worldId);
-      const savedMapUrl = localStorage.getItem(`oc-map-${worldId}`) || '';
+      let savedMapUrl = '';
+      try {
+        const data = await appDataApi.get(`map-${worldId}`);
+        savedMapUrl = data?.url || '';
+      } catch { savedMapUrl = localStorage.getItem(`oc-map-${worldId}`) || ''; }
+      // Auto-sync localStorage → DB
+      if (savedMapUrl) {
+        appDataApi.set(`map-${worldId}`, { url: savedMapUrl }).catch(() => {});
+      }
       set({ locations, loading: false, mapImageUrl: savedMapUrl });
     } catch {
       set({ loading: false });

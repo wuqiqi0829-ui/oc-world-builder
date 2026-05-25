@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useLocations } from '@/stores/locations';
 import { uploadImage } from '@/lib/db';
+import { useReadOnly } from '@/contexts/ReadOnlyContext';
 import { Map, Plus, Upload, GripVertical, EyeOff } from 'lucide-react';
 import type { Location } from '@/lib/database';
 import {
@@ -47,7 +48,7 @@ function SortableLocationCard({ loc, onClick, showHandle }: {
         </div>
         {showHandle && (
           <button {...attributes} {...listeners}
-            className="absolute top-2 left-2 p-1 rounded bg-white/70 dark:bg-white/10 backdrop-blur-sm text-primary-400 border border-white/50 shadow-sm cursor-grab active:cursor-grabbing hover:bg-white/90 dark:hover:bg-white/20 transition-colors"
+            className="absolute top-2 left-2 p-1 rounded bg-white/70 dark:bg-white/10 backdrop-blur-sm text-primary-400 border border-white/50 shadow-sm cursor-grab active:cursor-grabbing hover:bg-white/90 dark:hover:bg-white/20 transition-colors touch-none"
             onClick={(e) => e.stopPropagation()}
           >
             <GripVertical size={12} />
@@ -67,6 +68,7 @@ interface Props {
 }
 
 export default function MapView({ locations, worldId, onEdit, onCreate, onPreview }: Props) {
+  const readOnly = useReadOnly();
   const { mapImageUrl, setMapImageUrl, reorder } = useLocations();
   const [uploading, setUploading] = useState(false);
   const [showHandle, setShowHandle] = useState(false);
@@ -120,7 +122,7 @@ export default function MapView({ locations, worldId, onEdit, onCreate, onPrevie
     <div className="flex flex-col gap-4">
       <div className="flex-shrink-0">
         <div className="flex items-center gap-2 mb-2">
-          <button className="text-xs px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400 border border-primary-200 dark:border-primary-700/50 hover:bg-primary-100 transition-colors" onClick={() => { setMapImageUrl('', worldId); }}>更换底图</button>
+          {!readOnly && <button className="text-xs px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400 border border-primary-200 dark:border-primary-700/50 hover:bg-primary-100 transition-colors" onClick={() => { setMapImageUrl('', worldId); }}>更换底图</button>}
         </div>
         <div className="rounded-card overflow-hidden border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))]" style={{ aspectRatio: '16/9' }}>
           <img src={mapImageUrl} alt="世界地图" className="w-full h-full object-contain" draggable={false} />
@@ -131,12 +133,14 @@ export default function MapView({ locations, worldId, onEdit, onCreate, onPrevie
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium">地点列表 ({locations.length})</h3>
           <div className="flex items-center gap-2">
-            <button className="btn-ghost text-xs flex items-center gap-1" onClick={() => setShowHandle(!showHandle)} title={showHandle ? '隐藏拖拽' : '显示拖拽'}>
+            {!readOnly && <button className="btn-ghost text-xs flex items-center gap-1" onClick={() => setShowHandle(!showHandle)} title={showHandle ? '隐藏拖拽' : '显示拖拽'}>
               <EyeOff size={14} className={showHandle ? '' : 'text-primary-500'} />
-            </button>
+            </button>}
+            {!readOnly && (
             <button className="text-xs flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400 border border-primary-200 dark:border-primary-700/50 hover:bg-primary-100 transition-colors" onClick={onCreate}>
               <Plus size={12} /> 新建地点
             </button>
+            )}
           </div>
         </div>
         {locations.length === 0 ? (

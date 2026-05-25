@@ -51,9 +51,9 @@ export default function ChapterPreview({ entries, initialIndex }: Props) {
         </div>
       )}
 
-      <div className="flex items-center justify-center gap-10 mt-6 pt-4 border-t border-[rgb(var(--color-border))]">
+      <div className="flex items-center justify-center gap-3 sm:gap-10 mt-6 pt-4 border-t border-[rgb(var(--color-border))]">
         <button
-          className="btn-ghost text-sm !px-3 !py-1.5 flex items-center gap-1 disabled:opacity-30"
+          className="btn-ghost text-sm !px-2 sm:!px-3 !py-1.5 flex items-center gap-1 disabled:opacity-30 flex-shrink-0"
           disabled={index === 0}
           onClick={() => goTo(index - 1)}
         >
@@ -61,7 +61,7 @@ export default function ChapterPreview({ entries, initialIndex }: Props) {
         </button>
 
         <select
-          className="text-sm h-10 pl-3 pr-10 w-48 rounded-md border border-primary-200 dark:border-primary-700/30 bg-white dark:bg-gray-800 outline-none"
+          className="text-sm h-10 pl-3 pr-8 sm:pr-10 w-32 sm:w-48 rounded-md border border-primary-200 dark:border-primary-700/30 bg-white dark:bg-gray-800 outline-none"
           value={index}
           onChange={(e) => goTo(Number(e.target.value))}
         >
@@ -73,7 +73,7 @@ export default function ChapterPreview({ entries, initialIndex }: Props) {
         </select>
 
         <button
-          className="btn-ghost text-sm !px-3 !py-1.5 flex items-center gap-1 disabled:opacity-30"
+          className="btn-ghost text-sm !px-2 sm:!px-3 !py-1.5 flex items-center gap-1 disabled:opacity-30 flex-shrink-0"
           disabled={index === entries.length - 1}
           onClick={() => goTo(index + 1)}
         >

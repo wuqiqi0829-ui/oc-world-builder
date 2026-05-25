@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSettings, themePresets } from '@/stores/settings';
 import ImageUploader from '@/components/ui/ImageUploader';
 import type { ImageItem } from '@/lib/database';
@@ -26,6 +26,13 @@ export default function SettingsView() {
   const [cropZoom, setCropZoom] = useState(1);
   const [cropPixels, setCropPixels] = useState<Area | null>(null);
   const [cropping, setCropping] = useState(false);
+  const [cropAspect, setCropAspect] = useState(window.innerWidth < 768 ? 9 / 16 : 16 / 9);
+
+  useEffect(() => {
+    const onResize = () => setCropAspect(window.innerWidth < 768 ? 9 / 16 : 16 / 9);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const handleBgChange = (imgs: ImageItem[]) => {
     setImages(imgs);
@@ -125,7 +132,7 @@ export default function SettingsView() {
 
       {cropOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setCropOpen(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[90vw] h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-xl shadow-2xl w-full sm:w-[90vw] h-full sm:h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-3 border-b border-[rgb(var(--color-border))]">
               <h3 className="font-semibold text-sm">框选背景区域</h3>
               <div className="flex items-center gap-2">
@@ -137,7 +144,7 @@ export default function SettingsView() {
               </div>
             </div>
             <div className="flex-1 relative bg-gray-900">
-              <Cropper image={cropImageUrl} crop={crop} zoom={cropZoom} aspect={16/9}
+              <Cropper image={cropImageUrl} crop={crop} zoom={cropZoom} aspect={cropAspect}
                 onCropChange={setCrop} onZoomChange={setCropZoom} onCropComplete={handleCropComplete}
                 cropShape="rect" objectFit="contain" />
             </div>

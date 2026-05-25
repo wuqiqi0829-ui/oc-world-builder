@@ -124,3 +124,50 @@
 .dark .react-flow__pane {
   background-color: #111827 !important;
 }
+
+/* Touch devices & small screens: surface hover-revealed buttons */
+html.touch .group\/card .group-hover\/card\:opacity-100:not(.invisible),
+html.touch .group .group-hover\:opacity-100:not(.invisible) {
+  opacity: 0.5 !important;
+}
+@media (max-width: 1023px) {
+  .group\/card .group-hover\/card\:opacity-100:not(.invisible),
+  .group .group-hover\:opacity-100:not(.invisible) {
+    opacity: 0.5 !important;
+  }
+}
+
+/* Read-only mode: hide create/edit/delete/showHandle controls */
+[data-readonly] .btn-primary,
+[data-readonly] button[title*="删除"],
+[data-readonly] button[title*="导出"],
+[data-readonly] button[title*="导入"],
+[data-readonly] button[title*="拖拽"],
+[data-readonly] button[title*="显示拖拽"],
+[data-readonly] button[title*="隐藏拖拽"],
+[data-readonly] button[title*="新建"],
+[data-readonly] button[title*="添加章节"],
+[data-readonly] button[title*="对比"],
+[data-readonly] button[title*="加入对比"],
+[data-readonly] button[title*="取消对比"] {
+  display: none !important;
+}
+
+/* Mobile: reduce all text and card content */
+@media (max-width: 639px) {
+  body { font-size: 11px; }
+  .btn-primary, .btn-ghost { font-size: 9px !important; padding: 3px 6px !important; }
+  .btn-primary svg, .btn-ghost svg { width: 10px; height: 10px; }
+  h1 { font-size: 1.1rem !important; }
+  h2 { font-size: 1rem !important; }
+  h3 { font-size: 0.9rem !important; }
+  h4 { font-size: 0.8rem !important; }
+  .text-sm { font-size: 11px !important; }
+  .text-base { font-size: 12px !important; }
+  .text-lg { font-size: 14px !important; }
+  .text-xs { font-size: 10px !important; }
+  .text-\[10px\] { font-size: 8px !important; }
+  .text-\[11px\] { font-size: 9px !important; }
+  .card { padding: 8px !important; }
+  input, select, textarea { font-size: 14px !important; }
+}

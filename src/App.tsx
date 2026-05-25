@@ -64,6 +64,7 @@ import ItemEditPanel from '@/components/items/ItemEditPanel';
 import WorldPreview from '@/components/worlds/WorldPreview';
 import LocationPreview from '@/components/map/LocationPreview';
 import UserProfileModal from '@/components/user/UserProfileModal';
+import SharePage from '@/pages/SharePage';
 
 const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; description: string }> = {
   characters: { icon: Users, title: '人物设定库', description: '在这里创建和管理你的OC人设卡' },
@@ -715,6 +716,7 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/share/:token" element={<SharePage />} />
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path="/*" element={user ? <AuthenticatedApp /> : <Navigate to="/login" replace />} />
     </Routes>

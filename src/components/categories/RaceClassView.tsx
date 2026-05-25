@@ -18,7 +18,7 @@ function SortableEntryCard({ entry, onPreview, showHandle }: { entry: CustomEntr
   const imgSrc = thumbUrl || entry.images?.[0]?.url;
 
   const imageEl = imgSrc && (
-    <div className="w-full rounded-lg overflow-hidden mb-8 h-96 flex-shrink-0">
+    <div className="w-full rounded-lg overflow-hidden mb-8 h-48 sm:h-64 md:h-80 lg:h-96 flex-shrink-0">
       <img src={imgSrc} alt={entry.name} className="w-full h-full object-cover" />
     </div>
   );
@@ -27,19 +27,19 @@ function SortableEntryCard({ entry, onPreview, showHandle }: { entry: CustomEntr
     <div ref={setNodeRef} style={style} className={clsx('relative group/card break-inside-avoid', isDragging && 'z-10 opacity-90')}>
       {showHandle && (
         <button {...attributes} {...listeners}
-          className="absolute top-2 left-2 z-10 p-1 rounded bg-white/70 dark:bg-white/10 backdrop-blur-sm text-primary-400 border border-white/50 shadow-sm cursor-grab active:cursor-grabbing hover:bg-white/90 dark:hover:bg-white/20 transition-colors"
+          className="absolute top-2 left-2 z-10 p-1 rounded bg-white/70 dark:bg-white/10 backdrop-blur-sm text-primary-400 border border-white/50 shadow-sm cursor-grab active:cursor-grabbing hover:bg-white/90 dark:hover:bg-white/20 transition-colors touch-none"
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical size={12} />
         </button>
       )}
       <Card hover padding="sm" onClick={onPreview} className="flex flex-col">
-        <div className="text-center pt-1 pb-4 px-1 flex flex-col">
-          {imageEl || <div className="w-full h-96 flex-shrink-0 mb-8" />}
+        <div className="text-center pt-1 pb-2 sm:pb-4 px-1 flex flex-col">
+          {imageEl || <div className="w-full h-48 sm:h-64 md:h-80 lg:h-96 flex-shrink-0 mb-4 sm:mb-8" />}
           <div className="flex-1 flex flex-col items-center">
             <h4 className="text-base font-semibold">{entry.name}</h4>
             {brief && (
-              <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-4 whitespace-pre-wrap">「{brief}」</p>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-2 sm:mt-4 whitespace-pre-wrap">「{brief}」</p>
             )}
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function RaceClassView({ worldId, onCreateEntry, onPreviewEntry }
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={items.map(e => e.id)} strategy={rectSortingStrategy}>
-            <div className="columns-3 sm:columns-4 lg:columns-5 gap-2 [&>*]:mb-2">
+            <div className="columns-2 sm:columns-4 lg:columns-5 gap-2 [&>*]:mb-2">
               {items.map((entry) => (
                 <SortableEntryCard key={entry.id} entry={entry} showHandle={showHandle}
                   onPreview={() => cat && onPreviewEntry(cat.id, entry.id)} />

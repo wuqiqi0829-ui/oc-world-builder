@@ -25,7 +25,7 @@ function SortableCharacterCard({ character, selected, onClick, showHandle }: {
     <div ref={setNodeRef} style={style} className={clsx('relative h-full', isDragging && 'z-10 opacity-90')}>
       {showHandle && (
         <button {...attributes} {...listeners}
-          className="absolute top-2 left-2 z-10 p-1 rounded bg-white/70 dark:bg-white/10 backdrop-blur-sm text-primary-400 border border-white/50 shadow-sm cursor-grab active:cursor-grabbing hover:bg-white/90 dark:hover:bg-white/20 transition-colors"
+          className="absolute top-2 left-2 z-10 p-1 rounded bg-white/70 dark:bg-white/10 backdrop-blur-sm text-primary-400 border border-white/50 shadow-sm cursor-grab active:cursor-grabbing hover:bg-white/90 dark:hover:bg-white/20 transition-colors touch-none"
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical size={12} />

@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { X, Edit3 } from 'lucide-react';
 import { countChars } from '@/lib/utils';
+import { useReadOnly } from '@/contexts/ReadOnlyContext';
 
 interface Props {
   open: boolean;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function PreviewModal({ open, onClose, title, children, onEdit, onEnter, contentText, maxWidth = 'max-w-3xl' }: Props) {
+  const readOnly = useReadOnly();
   if (!open) return null;
 
   return (
@@ -43,9 +45,11 @@ export default function PreviewModal({ open, onClose, title, children, onEdit, o
             {onEnter && (
               <button className="btn-primary text-xs !px-4 !py-2" onClick={onEnter}>进入世界观</button>
             )}
-            <button className="btn-ghost text-xs !px-4 !py-2 flex items-center gap-1.5" onClick={onEdit}>
-              <Edit3 size={12} /> 编辑
-            </button>
+            {!readOnly && (
+              <button className="btn-ghost text-xs !px-4 !py-2 flex items-center gap-1.5" onClick={onEdit}>
+                <Edit3 size={12} /> 编辑
+              </button>
+            )}
           </div>
         </div>
       </div>

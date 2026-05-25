@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { notesApi } from '@/lib/db';
+import { useReadOnly } from '@/contexts/ReadOnlyContext';
 import type { Note } from '@/lib/database';
 import EmptyState from '@/components/ui/EmptyState';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function NotesView({ worldId }: Props) {
+  const readOnly = useReadOnly();
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
@@ -18,6 +20,18 @@ export default function NotesView({ worldId }: Props) {
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleVal, setEditingTitleVal] = useState('');
   const [dirty, setDirty] = useState(false);
+  const dirtyRef = useRef({ activeId, title, content, dirty });
+  dirtyRef.current = { activeId, title, content, dirty };
+
+  // auto-save on unmount
+  useEffect(() => {
+    return () => {
+      const d = dirtyRef.current;
+      if (d.dirty && d.activeId) {
+        notesApi.update(d.activeId, { title: d.title, content: d.content } as any).catch(() => {});
+      }
+    };
+  }, []);
 
   const fetchNotes = useCallback(async () => {
     const data = await notesApi.list(worldId);
@@ -26,6 +40,10 @@ export default function NotesView({ worldId }: Props) {
       setActiveId(data[0].id);
       setTitle(data[0].title || '');
       setContent(data[0].content || '');
+    } else if (data.length === 0) {
+      setActiveId(null);
+      setTitle('');
+      setContent('');
     }
   }, [worldId]);
 
@@ -35,13 +53,6 @@ export default function NotesView({ worldId }: Props) {
     await notesApi.update(id, { title: t, content: c } as any);
     setNotes((prev) => prev.map((n) => n.id === id ? { ...n, title: t, content: c } : n));
   }, []);
-
-  // auto-save dirty content on unmount
-  useEffect(() => {
-    return () => {
-      if (dirty && activeId) saveCurrent(activeId, title, content);
-    };
-  }, [dirty, activeId, title, content, saveCurrent]);
 
   const switchNote = async (note: Note) => {
     if (dirty && activeId) {
@@ -94,14 +105,14 @@ export default function NotesView({ worldId }: Props) {
   const activeNote = notes.find((n) => n.id === activeId) || null;
 
   return (
-    <div className="flex gap-4 h-full bg-primary-50/40 dark:bg-primary-950/20 rounded-xl p-4">
-      <div className="w-56 flex-shrink-0 overflow-y-auto">
+    <div className="flex flex-col md:flex-row gap-4 h-full bg-primary-50/40 dark:bg-primary-950/20 rounded-xl p-4">
+      <div className="md:w-56 flex-shrink-0 overflow-y-auto">
         <div className="backdrop-blur-md bg-white/60 dark:bg-white/5 rounded-xl p-3 border border-primary-100/60 dark:border-primary-800/20">
           <div className="flex items-center justify-between mb-3">
             <div className="flex-1" />
             <h3 className="text-sm font-medium text-primary-700 dark:text-primary-300">速记 ({notes.length})</h3>
             <div className="flex-1 flex justify-end">
-              <button className="btn-ghost text-xs !px-2 !py-1 text-primary-500" onClick={createNote}><Plus size={14} /></button>
+              {!readOnly && <button className="btn-ghost text-xs !px-2 !py-1 text-primary-500" onClick={createNote}><Plus size={14} /></button>}
             </div>
           </div>
           {notes.map((n) => (
@@ -146,10 +157,10 @@ export default function NotesView({ worldId }: Props) {
               />
               <div className="flex items-center gap-2 ml-3">
                 {saved && <span className="text-xs text-green-500">已保存</span>}
-                <button className="btn-primary text-xs" onClick={handleSave}>保存</button>
-                <button className="btn-ghost text-xs text-red-400" onClick={() => deleteNote(activeNote.id)}>
+                {!readOnly && <button className="btn-primary text-xs" onClick={handleSave}>保存</button>}
+                {!readOnly && <button className="btn-ghost text-xs text-red-400" onClick={() => deleteNote(activeNote.id)}>
                   <Trash2 size={14} />
-                </button>
+                </button>}
               </div>
             </div>
             <RichTextEditor key={activeId} content={content} onChange={(html) => {

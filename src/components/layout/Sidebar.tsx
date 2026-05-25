@@ -5,6 +5,7 @@ import {
   Trash2, Plus, ChevronDown
 } from 'lucide-react';
 import clsx from 'clsx';
+import { useReadOnly } from '@/contexts/ReadOnlyContext';
 
 interface World {
   id: string;
@@ -44,6 +45,7 @@ export default function Sidebar({
   worlds, activeWorldId, activeModule, onSelectWorld, onDeleteWorld, onSelectModule,
   onNewWorld, onShowAllWorlds, collapsed, onToggleCollapse,
 }: SidebarProps) {
+  const readOnly = useReadOnly();
   const [worldsCollapsed, setWorldsCollapsed] = useState(false);
 
   if (collapsed) {
@@ -76,7 +78,7 @@ export default function Sidebar({
       <div className="p-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
         <span className="text-sm font-medium">世界观</span>
         <div className="flex items-center gap-1">
-          {onNewWorld && (
+          {onNewWorld && !readOnly && (
             <button onClick={onNewWorld} className="p-1 rounded-btn hover:bg-[rgb(var(--color-border))] text-primary-500" title="新建世界观">
               <Plus size={16} />
             </button>
@@ -138,13 +140,15 @@ export default function Sidebar({
                     <span className="text-[10px] text-[rgb(var(--color-text-secondary))] truncate mt-0.5">{w.description}</span>
                   )}
                 </div>
-                <button
-                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all flex-shrink-0 self-center"
-                  onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
-                  title="删除"
-                >
-                  <Trash2 size={12} />
-                </button>
+                {!readOnly && (
+                  <button
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900 text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-all flex-shrink-0 self-center"
+                    onClick={(e) => { e.stopPropagation(); onDeleteWorld(w.id); }}
+                    title="删除"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
