@@ -5,11 +5,12 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, X, Upload, Loader2 } from 'lucide-react';
+import { GripVertical, X, Upload, Loader2, AlertCircle } from 'lucide-react';
 import { uploadImage } from '@/lib/db';
 import type { ImageItem } from '@/lib/database';
 import Lightbox from './Lightbox';
 import clsx from 'clsx';
+import imageCompression from 'browser-image-compression';
 
 interface Props {
   images: ImageItem[];
@@ -60,6 +61,7 @@ function SortableImage({ image, index, onRemove, onPreview, hideHandle }: {
 
 export default function ImageUploader({ images, onChange, maxImages }: Props) {
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -68,8 +70,8 @@ export default function ImageUploader({ images, onChange, maxImages }: Props) {
 
   const handleFiles = useCallback(async (files: FileList | File[]) => {
     setUploading(true);
+    setUploadError('');
     const newImages: ImageItem[] = [];
-    const { default: imageCompression } = await import('browser-image-compression');
 
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) continue;
@@ -81,12 +83,12 @@ export default function ImageUploader({ images, onChange, maxImages }: Props) {
         });
         const url = await uploadImage(compressed, 'images');
         newImages.push({ url, label: '', order: images.length + newImages.length });
-      } catch {
-        // skip failed uploads
+      } catch (e: any) {
+        setUploadError(e?.message || String(e) || '上传失败');
       }
     }
 
-    onChange([...images, ...newImages]);
+    if (newImages.length > 0) onChange([...images, ...newImages]);
     setUploading(false);
   }, [images, onChange]);
 
@@ -194,6 +196,13 @@ export default function ImageUploader({ images, onChange, maxImages }: Props) {
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
       </div>
+      )}
+
+      {uploadError && (
+        <div className="flex items-center gap-1.5 text-red-500 text-xs p-2 bg-red-50 rounded-lg">
+          <AlertCircle size={14} />
+          <span>{uploadError}</span>
+        </div>
       )}
 
       {lightboxIndex !== null && (

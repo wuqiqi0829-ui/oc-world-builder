@@ -10,6 +10,7 @@ import { uploadImage } from '@/lib/db';
 import type { ImageItem } from '@/lib/database';
 import Lightbox from './Lightbox';
 import clsx from 'clsx';
+import imageCompression from 'browser-image-compression';
 
 function SortableImage({ image, onRemove, onPreview, onSetCover }: {
   image: ImageItem;
@@ -104,7 +105,6 @@ export default function OutfitImageUploader({ images, onChange, outfitDescriptio
     setUploading(true);
     setUploadError('');
     const newImages: ImageItem[] = [];
-    const { default: imageCompression } = await import('browser-image-compression');
 
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) continue;
