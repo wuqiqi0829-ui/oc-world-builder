@@ -140,19 +140,22 @@ function AuthenticatedApp() {
   const [userName, setUserName] = useState('');
   const [userAvatar, setUserAvatar] = useState('');
 
+  const { init: initSettings, syncToServer } = useSettings();
+
   const refreshUser = useCallback(async () => {
     const { data } = await supabase.auth.getUser();
     if (data.user) {
       const meta = data.user.user_metadata || {};
       setUserName((meta.display_name as string) || '');
       setUserAvatar((meta.avatar_url as string) || '');
+      // Sync settings to server after auth confirmed
+      syncToServer();
     }
-  }, []);
+  }, [syncToServer]);
 
   useEffect(() => { refreshUser(); }, [refreshUser]);
 
-  const { init: initSettings, syncToServer } = useSettings();
-  useEffect(() => { initSettings(); syncToServer(); }, [initSettings, syncToServer]);
+  useEffect(() => { initSettings(); }, [initSettings]);
 
   useEffect(() => {
     fetchWorlds();
