@@ -185,6 +185,7 @@ export default function OrgPowerEditPanel({ entryId, categoryId, onClose }: Prop
                 onCropComplete={handleCropComplete}
                 cropShape="rect"
                 objectFit="contain"
+                crossOrigin=""
               />
             </div>
             <div className="px-5 py-3 border-t border-[rgb(var(--color-border))] flex items-center gap-3">

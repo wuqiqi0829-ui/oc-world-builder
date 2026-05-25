@@ -146,7 +146,7 @@ export default function SettingsView() {
             <div className="flex-1 relative bg-gray-900">
               <Cropper image={cropImageUrl} crop={crop} zoom={cropZoom} aspect={cropAspect}
                 onCropChange={setCrop} onZoomChange={setCropZoom} onCropComplete={handleCropComplete}
-                cropShape="rect" objectFit="contain" />
+                cropShape="rect" objectFit="contain" crossOrigin="" />
             </div>
             <div className="px-5 py-3 border-t border-[rgb(var(--color-border))] flex items-center gap-3">
               <span className="text-xs text-[rgb(var(--color-text-secondary))]">缩放</span>

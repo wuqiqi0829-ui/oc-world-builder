@@ -164,6 +164,7 @@ export default function IllustrationEditPanel({ worldId, illustrationId, onClose
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
+                crossOrigin=""
               />
               <button
                 className="absolute top-2 right-2 p-1 rounded-full bg-black/40 text-white hover:bg-red-500 z-10"

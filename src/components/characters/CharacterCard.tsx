@@ -111,7 +111,7 @@ export default function CharacterCard({ character, selected, onClick }: Props) {
                   </button>
                 </div>
                 <div className="relative w-full aspect-video bg-black">
-                  <Cropper image={cropImageSrc} crop={crop} zoom={zoom} aspect={16 / 9} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onCropComplete} />
+                  <Cropper image={cropImageSrc} crop={crop} zoom={zoom} aspect={16 / 9} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onCropComplete} crossOrigin="" />
                 </div>
                 <div className="p-3">
                   <input type="range" min={1} max={5} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="w-full" />

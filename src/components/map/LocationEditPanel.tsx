@@ -189,6 +189,7 @@ export default function LocationEditPanel({ worldId, locationId, onClose, defaul
                 onCropComplete={handleCropComplete}
                 cropShape="rect"
                 objectFit="contain"
+                crossOrigin=""
               />
             </div>
             <div className="px-5 py-3 border-t border-[rgb(var(--color-border))] flex items-center gap-3">
