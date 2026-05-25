@@ -9,6 +9,7 @@ on:
       - 'dist/**'
       - 'android/**'
       - 'package.json'
+      - '.github/workflows/android.yml'
 
 jobs:
   build:
