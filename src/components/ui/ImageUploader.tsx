@@ -162,9 +162,8 @@ export default function ImageUploader({ images, onChange, maxImages }: Props) {
         ref={dropZoneRef}
         className={clsx(
           'border-2 border-dashed border-[rgb(var(--color-border))] rounded-card p-6 text-center transition-colors',
-          'hover:border-primary-400 cursor-pointer'
+          'hover:border-primary-400 cursor-pointer relative'
         )}
-        onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-primary-500'); }}
         onDragLeave={(e) => { e.currentTarget.classList.remove('border-primary-500'); }}
         onDrop={(e) => {
@@ -178,7 +177,7 @@ export default function ImageUploader({ images, onChange, maxImages }: Props) {
           type="file"
           accept="image/*"
           multiple={maxImages !== 1}
-          className="hidden"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
         {uploading ? (

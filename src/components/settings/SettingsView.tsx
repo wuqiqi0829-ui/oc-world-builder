@@ -106,8 +106,8 @@ export default function SettingsView() {
           {customFont && <option value="custom">{customFont.name}（已导入）</option>}
         </select>
         <div className="flex items-center gap-2">
-          <input ref={fontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="hidden" onChange={handleFontUpload} />
-          <button className="btn-ghost text-xs flex items-center gap-1" onClick={() => fontInputRef.current?.click()} disabled={uploadingFont}>
+          <button className="btn-ghost text-xs flex items-center gap-1 relative" disabled={uploadingFont}>
+            <input ref={fontInputRef} type="file" accept=".ttf,.otf,.woff,.woff2" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFontUpload} />
             {uploadingFont ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
             导入字体文件
           </button>

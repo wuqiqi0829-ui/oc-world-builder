@@ -109,8 +109,8 @@ export default function MapView({ locations, worldId, onEdit, onCreate, onPrevie
         <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6 text-center max-w-xs">
           上传你的世界观地图底图
         </p>
-        <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleMapUpload} />
-        <button className="btn-primary text-sm flex items-center gap-2" onClick={() => imageInputRef.current?.click()} disabled={uploading}>
+        <button className="btn-primary text-sm flex items-center gap-2 relative" disabled={uploading}>
+          <input ref={imageInputRef} type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleMapUpload} />
           <Upload size={16} />
           {uploading ? '上传中...' : '上传地图底图'}
         </button>
