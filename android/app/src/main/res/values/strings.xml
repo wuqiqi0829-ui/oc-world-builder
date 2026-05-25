@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OC World Builder</string>
+    <string name="title_activity_main">OC World Builder</string>
+    <string name="package_name">com.ocworldbuilder.app</string>
+    <string name="custom_url_scheme">com.ocworldbuilder.app</string>
+</resources>

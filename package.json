@@ -3,17 +3,43 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:electron": "tsc -b && vite build --base=./",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "electron": "ELECTRON_RUN_AS_NODE= electron .",
+    "dist": "npm run build:electron && ELECTRON_RUN_AS_NODE= electron-builder"
+  },
+  "build": {
+    "appId": "com.oc-world-builder.app",
+    "productName": "OC World Builder",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": "portable"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.46.0",
+    "@tauri-apps/api": "^2.11.0",
     "@tiptap/extension-image": "^2.10.0",
     "@tiptap/extension-placeholder": "^2.10.0",
     "@tiptap/react": "^2.10.0",
@@ -29,10 +55,13 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "electron": "^42.2.0",
+    "electron-builder": "^26.8.1",
     "pg": "^8.21.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
