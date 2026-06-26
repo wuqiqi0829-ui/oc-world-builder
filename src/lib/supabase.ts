@@ -9,6 +9,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
   },
+  global: {
+    headers: { 'Accept-Encoding': 'gzip' },
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 4,
+    },
+  },
 });
 
 export type { User, Session } from '@supabase/supabase-js';
