@@ -82,7 +82,7 @@ const modulePlaceholders: Record<string, { icon: typeof Globe; title: string; de
 function AuthenticatedApp() {
   const { user, signOut } = useAuth();
   const {
-    worlds, activeWorldId, loading: worldsLoading, setActiveWorld,
+    worlds, activeWorldId, setActiveWorld,
     fetchWorlds, createWorld, deleteWorld, updateWorld, reorderWorlds, startRealtime,
   } = useWorlds();
   const {
