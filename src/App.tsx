@@ -52,7 +52,7 @@ import TableEditPanel from '@/components/tables/TableEditPanel';
 
 import type { SearchResult } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
-import { exportAllData, downloadJson, importAllData, autoBackup } from '@/lib/backup';
+import { exportAllData, downloadJson, importAllData } from '@/lib/backup';
 import { Globe, Plus, Users, Clock, Map, Image, Loader2 } from 'lucide-react';
 import PreviewModal from '@/components/ui/PreviewModal';
 import EditModal from '@/components/ui/EditModal';
@@ -168,13 +168,6 @@ function AuthenticatedApp() {
     const channel = startRealtime();
     return () => { channel.unsubscribe(); };
   }, [fetchWorlds, fetchTables, startRealtime]);
-
-  // Auto-backup after worlds load
-  useEffect(() => {
-    if (worlds.length > 0 && !worldsLoading) {
-      autoBackup();
-    }
-  }, [worlds, worldsLoading]);
 
   useEffect(() => {
     if (activeWorldId) {
