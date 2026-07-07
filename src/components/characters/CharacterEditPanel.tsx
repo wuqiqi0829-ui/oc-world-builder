@@ -162,7 +162,7 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
         <OutfitImageUploader images={images} onChange={setImages} outfitDescriptions={outfitDescs} onDescriptionsChange={setOutfitDescs} />
       </div>
 
-      <div className="flex justify-between gap-2 sticky bottom-0 bg-[rgb(var(--color-bg))]/95 backdrop-blur-sm pt-3 pb-3 px-3 -mx-1 rounded-lg border border-[rgb(var(--color-border))] shadow-[0_-2px_8px_rgb(var(--primary-600)/0.1)]">
+      <div className="flex justify-between gap-2 sticky bottom-0 bg-[rgb(var(--color-bg))] pt-3 pb-3 px-3 -mx-1 rounded-lg border border-[rgb(var(--color-border))]">
         {!isNew ? (
           <button className="btn-ghost text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-1" onClick={handleDelete}>
             <Trash2 size={14} /> 删除
