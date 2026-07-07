@@ -70,8 +70,12 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
   }, [characterId, characters]);
 
   const handleSave = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      setSaveError('请输入姓名');
+      return;
+    }
     setSaving(true);
+    setSaveError('');
     const data = {
       name: form.name.trim(),
       nickname: form.nickname,
@@ -169,7 +173,7 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
         <OutfitImageUploader images={images} onChange={setImages} outfitDescriptions={outfitDescs} onDescriptionsChange={setOutfitDescs} />
       </div>
 
-      <div className="flex justify-between gap-2 sticky bottom-0 bg-[rgb(var(--color-bg))] pt-3 pb-3 px-3 -mx-1 rounded-lg border border-[rgb(var(--color-border))]">
+      <div className="flex justify-between gap-2 pt-4 pb-2 border-t border-[rgb(var(--color-border))]">
         {!isNew ? (
           <button className="btn-ghost text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-1" onClick={handleDelete}>
             <Trash2 size={14} /> 删除
@@ -177,7 +181,7 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
         ) : <div />}
         <div className="flex gap-2">
           <button className="btn-ghost text-sm" onClick={onClose}>取消</button>
-          <button className="btn-primary text-sm flex items-center gap-2" onClick={handleSave} disabled={saving || !form.name.trim()}>
+          <button className="btn-primary text-sm flex items-center gap-2" onClick={handleSave} disabled={saving}>
             {saving ? '保存中...' : '保存'}
           </button>
         </div>
