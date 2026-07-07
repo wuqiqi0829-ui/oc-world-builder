@@ -33,6 +33,7 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
   const [outfitDescs, setOutfitDescs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [createdId, setCreatedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -95,8 +96,11 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
         await update((createdId || characterId)!, data);
       }
       setSaved(true);
+      setSaveError('');
       setTimeout(() => setSaved(false), 2000);
-    } catch { /* handle error */ }
+    } catch (e: any) {
+      setSaveError(e?.message || String(e) || '保存失败');
+    }
     setSaving(false);
   };
 
@@ -133,6 +137,9 @@ export default function CharacterEditPanel({ worldId, characterId, onClose }: Pr
           <Check size={14} className="text-green-500" />
           <span className="text-xs text-green-500">保存成功</span>
         </div>
+      )}
+      {saveError && (
+        <div className="text-xs text-red-500 bg-red-50 p-2 rounded-lg">{saveError}</div>
       )}
 
       <div className="grid grid-cols-2 gap-3">
